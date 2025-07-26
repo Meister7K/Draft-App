@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import PlayerPerformanceChart from "../../components/PlayerPerformanceChart";
 import { ConsistencyScore } from "../../components/ConsistencyScore";
 import { CareerOverview } from "../../components/CareerOverview";
+import { PlayerStatsLineChart } from "../../components/PlayerStatsLineChart";
 
 export default function PlayerDetailPage() {
   const { player_id } = useParams();
@@ -68,6 +69,7 @@ export default function PlayerDetailPage() {
     { id: "overview", label: "Overview" },
     { id: "seasons", label: "Seasons" },
     { id: "weeks", label: "Weekly Stats" },
+    { id: "comparison", label: "Stats Comparison" },
   ];
 
   const renderOverview = () => (
@@ -176,52 +178,43 @@ export default function PlayerDetailPage() {
       );
     }
 
-    const seasons = Object.keys(player.seasons).sort((a, b) => b - a); // Sort descending
-    const currentSelectedSeason = selectedSeason || seasons[0]; // Default to most recent season
+    const seasons = Object.keys(player.seasons).sort((a, b) => b - a);
+    const currentSelectedSeason = selectedSeason || seasons[0];
     const seasonData = player.seasons[currentSelectedSeason];
 
-    // Enhanced stat formatting for the actual data structure
     const formatStatValue = (key, value) => {
       if (typeof value !== "number") return String(value);
-      
-      // Integer stats (games, attempts, completions, TDs, etc.)
-      if (["gp", "gs", "gms_active", "pass_att", "pass_cmp", "pass_td", "pass_int", "rush_att", "rush_td", 
+
+      if (["gp", "gs", "gms_active", "pass_att", "pass_cmp", "pass_td", "pass_int", "rush_att", "rush_td",
            "rec_td", "receptions", "targets", "carries", "anytime_tds", "fum", "fum_lost", "pass_sack"].includes(key) ||
           key.includes("_att") || key.includes("_cmp") || key.includes("_td") || key.includes("_int")) {
         return Math.round(value).toLocaleString();
       }
-      
-      // Percentage stats
+
       if (key.includes("pct") || key.includes("percentage")) {
         return value.toFixed(1) + "%";
       }
-      
-      // Yards and distance stats
+
       if (key.includes("_yd") || key.includes("yards") || key.includes("_lng")) {
         return Math.round(value).toLocaleString();
       }
-      
-      // Rate stats (per attempt, per carry, etc.)
+
       if (key.includes("ypa") || key.includes("ypc") || key.includes("yac")) {
         return value.toFixed(2);
       }
-      
-      // Fantasy points
+
       if (key.includes("pts_") || key.includes("fantasy_points") || key.includes("projected_fantasy")) {
         return value.toFixed(1);
       }
-      
-      // Rankings and ADP
+
       if (key.includes("rank") || key.includes("adp")) {
         return value.toFixed(1);
       }
-      
-      // Rating stats
+
       if (key.includes("rtg") || key.includes("rating")) {
         return value.toFixed(1);
       }
-      
-      // Default decimal formatting
+
       return value.toFixed(1);
     };
 
@@ -236,7 +229,6 @@ export default function PlayerDetailPage() {
       return "text-[var(--foreground)]";
     };
 
-    // Categorize stats for better organization using the actual data structure
     const categorizeStats = (seasonData) => {
       const categories = {
         "Fantasy Performance": [],
@@ -247,7 +239,6 @@ export default function PlayerDetailPage() {
         "Rankings": []
       };
 
-      // Handle fantasy points and projections
       if (seasonData.fantasy_points) {
         categories["Fantasy Performance"].push(["fantasy_points", seasonData.fantasy_points]);
       }
@@ -255,7 +246,6 @@ export default function PlayerDetailPage() {
         categories["Fantasy Performance"].push(["projected_fantasy_points", seasonData.projected_fantasy_points]);
       }
 
-      // Process season_totals if available
       if (seasonData.season_totals) {
         Object.entries(seasonData.season_totals).forEach(([key, value]) => {
           if (key.includes("pass_") && !key.includes("rush")) {
@@ -274,7 +264,6 @@ export default function PlayerDetailPage() {
         });
       }
 
-      // Process season_projected_totals if available
       if (seasonData.season_projected_totals) {
         Object.entries(seasonData.season_projected_totals).forEach(([key, value]) => {
           if (key.includes("pass_") && !key.includes("rush")) {
@@ -291,13 +280,12 @@ export default function PlayerDetailPage() {
         });
       }
 
-      // Handle any other direct season data
       Object.entries(seasonData)
-        .filter(([key, value]) => 
-          key !== "weeks" && 
-          key !== "season_totals" && 
-          key !== "season_projected_totals" && 
-          key !== "fantasy_points" && 
+        .filter(([key, value]) =>
+          key !== "weeks" &&
+          key !== "season_totals" &&
+          key !== "season_projected_totals" &&
+          key !== "fantasy_points" &&
           key !== "projected_fantasy_points" &&
           typeof value !== "object"
         )
@@ -312,7 +300,6 @@ export default function PlayerDetailPage() {
 
     return (
       <div className="space-y-6">
-        {/* Season Selector */}
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-[var(--foreground)]">
             Season Statistics
@@ -339,15 +326,14 @@ export default function PlayerDetailPage() {
           </div>
         </div>
 
-        {/* Selected Season Stats */}
         <div className="bg-[var(--secondary)] rounded-lg shadow p-6">
           <h4 className="font-semibold text-xl mb-4 text-[var(--foreground)]">
             {currentSelectedSeason} Season
           </h4>
-          
+
           {Object.entries(statCategories).map(([category, stats]) => {
             if (stats.length === 0) return null;
-            
+
             return (
               <div key={category} className="mb-6">
                 <h5 className="font-medium text-[var(--foreground)] mb-3 text-sm uppercase tracking-wide opacity-80">
@@ -370,7 +356,6 @@ export default function PlayerDetailPage() {
           })}
         </div>
 
-        {/* Career Overview */}
         <CareerOverview player={player} />
       </div>
     );
@@ -384,9 +369,8 @@ export default function PlayerDetailPage() {
       {player.seasons && Object.keys(player.seasons).length > 0 ? (
         <div className="space-y-6">
           {Object.entries(player.seasons)
-            .sort((a, b) => b[0] - a[0]) // Sort seasons descending
+            .sort((a, b) => b[0] - a[0])
             .map(([season, seasonData]) => {
-              // Calculate totals for the season
               let totalStats = 0;
               let totalProjections = 0;
               if (
@@ -450,15 +434,12 @@ export default function PlayerDetailPage() {
                                   key={week}
                                   className="hover:bg-[var(--background)]"
                                 >
-                                  {/* Week number */}
                                   <td className="px-4 py-2 font-medium text-[var(--foreground)]">
                                     {week}
                                   </td>
-                                  {/* Opponent */}
                                   <td className="px-4 py-2 text-sm text-[var(--foreground)] opacity-80">
                                     {opponent}
                                   </td>
-                                  {/* Actual PPR points with conditional color */}
                                   <td
                                     className={`px-4 py-2 text-sm ${
                                       actual != null && projected != null
@@ -470,13 +451,11 @@ export default function PlayerDetailPage() {
                                   >
                                     {actual != null ? actual.toFixed(2) : "N/A"}
                                   </td>
-                                  {/* Projected PPR points */}
                                   <td className="px-4 py-2 text-sm text-[var(--primary)]">
                                     {projected != null
                                       ? projected.toFixed(2)
                                       : "N/A"}
                                   </td>
-                                  {/* Difference column */}
                                   <td className="px-4 py-2 text-sm font-semibold text-[var(--foreground)]">
                                     {diff}
                                   </td>
@@ -484,7 +463,6 @@ export default function PlayerDetailPage() {
                               );
                             }
                           )}
-                          {/* Total row */}
                           <tr className="bg-[var(--background)] font-bold">
                             <td className="px-4 py-2 text-[var(--foreground)]">
                               Total
@@ -520,7 +498,14 @@ export default function PlayerDetailPage() {
     </div>
   );
 
-  // console.log(player.seasons)
+  const renderStatsComparison = () => (
+    <div className="space-y-4">
+      {/* PlayerStatsLineChart Component */}
+      {player && data && (
+        <PlayerStatsLineChart player={player} allPlayersData={data} />
+      )}
+    </div>
+  );
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -558,6 +543,7 @@ export default function PlayerDetailPage() {
         {activeTab === "overview" && renderOverview()}
         {activeTab === "seasons" && renderSeasons()}
         {activeTab === "weeks" && renderWeeks()}
+        {activeTab === "comparison" && renderStatsComparison()}
       </div>
     </div>
   );

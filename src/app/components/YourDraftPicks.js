@@ -2,35 +2,37 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { WeeklyProjectionsChart } from "./WeeklyProjectionsChart";
+import { DraftPickOptimizer } from "./DraftPickOptimizer/DraftPickOptimizer";
 
-export function YourDraftPicks({
-  user,
-  leagueUsers,
-  data,
-  draft,
-}) {
+export function YourDraftPicks({ user, leagueUsers, data, draft }) {
   // State for selected member
   const [selectedMemberId, setSelectedMemberId] = useState(user.user_id);
 
   // Get position counts for the selected member's drafted players
   const getSelectedMemberPositionCounts = () => {
-    const memberPicks = draft.picks.filter(pick => pick.picked_by === selectedMemberId);
+    const memberPicks = draft.picks.filter(
+      (pick) => pick.picked_by === selectedMemberId
+    );
     const positionCounts = {};
-    
-    memberPicks.forEach(pick => {
+
+    memberPicks.forEach((pick) => {
       const position = pick.metadata?.position;
       if (position) {
         positionCounts[position] = (positionCounts[position] || 0) + 1;
       }
     });
-    
+
     return positionCounts;
   };
 
   // Calculate composite value for a player based on position scarcity and performance metrics
-  const calculateCompositeValue = (player, isDrafted = false, pickNumber = null) => {
+  const calculateCompositeValue = (
+    player,
+    isDrafted = false,
+    pickNumber = null
+  ) => {
     if (!player?.player_info) return 0;
-    
+
     const position = player.player_info.position;
     const overallRank = player.player_info.overall_rank || 999;
     const positionRank = player.player_info.position_rank || 999;
@@ -39,9 +41,12 @@ export function YourDraftPicks({
     // For drafted players, use static value calculation
     if (isDrafted && pickNumber) {
       // Get position counts at time of draft (before this pick)
-      const picksBeforeThis = draft.picks.filter(pick => pick.pick_no < pickNumber && pick.picked_by === selectedMemberId);
+      const picksBeforeThis = draft.picks.filter(
+        (pick) =>
+          pick.pick_no < pickNumber && pick.picked_by === selectedMemberId
+      );
       const positionCountsAtDraft = {};
-      picksBeforeThis.forEach(pick => {
+      picksBeforeThis.forEach((pick) => {
         const pos = pick.metadata?.position;
         if (pos) {
           positionCountsAtDraft[pos] = (positionCountsAtDraft[pos] || 0) + 1;
@@ -53,7 +58,11 @@ export function YourDraftPicks({
 
     // For available players, use current position counts
     const positionCounts = getSelectedMemberPositionCounts();
-    return calculateDynamicValue(player, positionCounts, draft.picks.length + 1);
+    return calculateDynamicValue(
+      player,
+      positionCounts,
+      draft.picks.length + 1
+    );
   };
 
   // Static value calculation for drafted players
@@ -65,25 +74,31 @@ export function YourDraftPicks({
 
     // Starting lineup requirements
     const positionRequirements = {
-      QB: 2,      // Only 2 QB slots, no FLEX eligibility
-      RB: 2 + 2,  // 2 RB slots + 2 FLEX slots
-      WR: 2 + 2,  // 2 WR slots + 2 FLEX slots
-      TE: 1 + 2,  // 1 TE slot + 2 FLEX slots
+      QB: 2, // Only 2 QB slots, no FLEX eligibility
+      RB: 2 + 2, // 2 RB slots + 2 FLEX slots
+      WR: 2 + 2, // 2 WR slots + 2 FLEX slots
+      TE: 1 + 2, // 1 TE slot + 2 FLEX slots
     };
 
     const coreRequirements = {
-      QB: 2, RB: 2, WR: 2, TE: 1,
+      QB: 2,
+      RB: 2,
+      WR: 2,
+      TE: 1,
     };
 
     const baseMultipliers = {
-      QB: 2.2, RB: 1.8, WR: 1.6, TE: 2.4,
+      QB: 2.2,
+      RB: 1.8,
+      WR: 1.6,
+      TE: 2.4,
     };
 
     const currentCount = positionCountsAtDraft[position] || 0;
     const coreNeeded = coreRequirements[position] || 0;
     const maxNeeded = positionRequirements[position] || 1;
     const baseMultiplier = baseMultipliers[position] || 1.0;
-    
+
     let finalMultiplier = baseMultiplier;
 
     // Position-specific value drops based on scarcity and FLEX eligibility
@@ -92,22 +107,27 @@ export function YourDraftPicks({
       finalMultiplier = baseMultiplier * 0.15; // 85% reduction
     } else if (position === "TE" && currentCount >= coreNeeded) {
       // TE: Drastic drop after 1 TE (limited depth)
-      finalMultiplier = baseMultiplier * 0.20; // 80% reduction
-    } else if ((position === "RB" || position === "WR") && currentCount >= coreNeeded) {
+      finalMultiplier = baseMultiplier * 0.2; // 80% reduction
+    } else if (
+      (position === "RB" || position === "WR") &&
+      currentCount >= coreNeeded
+    ) {
       // RB/WR: More gradual drop due to FLEX eligibility and depth
       if (currentCount >= maxNeeded) {
-        finalMultiplier = baseMultiplier * 0.40; // 60% reduction for excess
+        finalMultiplier = baseMultiplier * 0.4; // 60% reduction for excess
       } else {
         // Gradual reduction between core and max needed
-        const progressToMax = (currentCount - coreNeeded) / (maxNeeded - coreNeeded);
-        finalMultiplier = baseMultiplier * (1 - (progressToMax * 0.50)); // Up to 50% reduction
+        const progressToMax =
+          (currentCount - coreNeeded) / (maxNeeded - coreNeeded);
+        finalMultiplier = baseMultiplier * (1 - progressToMax * 0.5); // Up to 50% reduction
       }
     } else if (currentCount >= maxNeeded) {
       // Heavy penalty for excess players at any position
-      finalMultiplier = baseMultiplier * 0.30; // 70% reduction for excess players
+      finalMultiplier = baseMultiplier * 0.3; // 70% reduction for excess players
     } else {
       // Gradual reduction for positions not yet at core requirement
-      const reductionPerPlayer = position === "QB" || position === "TE" ? 0.25 : 0.15;
+      const reductionPerPlayer =
+        position === "QB" || position === "TE" ? 0.25 : 0.15;
       const reduction = Math.min(currentCount * reductionPerPlayer, 0.6);
       finalMultiplier = Math.max(baseMultiplier * (1 - reduction), 0.4);
     }
@@ -120,7 +140,7 @@ export function YourDraftPicks({
       const pickDifference = pickNumber - expectedPickForRank;
       // More generous bonus scaling: up to 100% bonus for major steals
       draftPositionBonus = 1.0 + Math.min(pickDifference / 50, 1.0); // Up to 100% bonus
-      
+
       // Extra bonus for really late steals (50+ picks later than expected)
       if (pickDifference >= 50) {
         draftPositionBonus += Math.min((pickDifference - 50) / 100, 0.5); // Additional 50% bonus
@@ -129,14 +149,15 @@ export function YourDraftPicks({
 
     const overallRankScore = Math.max(0, (300 - overallRank) / 300) * 100;
     const positionRankScore = Math.max(0, (100 - positionRank) / 100) * 100;
-    const projectedPointsScore = Math.min(projectedPoints / 400 * 100, 100);
+    const projectedPointsScore = Math.min((projectedPoints / 400) * 100, 100);
 
-    const compositeValue = (
-      overallRankScore * 0.3 +
-      positionRankScore * 0.25 +
-      projectedPointsScore * 0.35 +
-      (finalMultiplier - 1) * 10
-    ) * finalMultiplier * draftPositionBonus;
+    const compositeValue =
+      (overallRankScore * 0.3 +
+        positionRankScore * 0.25 +
+        projectedPointsScore * 0.35 +
+        (finalMultiplier - 1) * 10) *
+      finalMultiplier *
+      draftPositionBonus;
 
     return Math.round(compositeValue * 10) / 10;
   };
@@ -149,22 +170,31 @@ export function YourDraftPicks({
     const projectedPoints = player.player_info.projected_2025_points || 0;
 
     const positionRequirements = {
-      QB: 2, RB: 2 + 2, WR: 2 + 2, TE: 1 + 2,
+      QB: 2,
+      RB: 2 + 2,
+      WR: 2 + 2,
+      TE: 1 + 2,
     };
 
     const coreRequirements = {
-      QB: 2, RB: 2, WR: 2, TE: 1,
+      QB: 2,
+      RB: 2,
+      WR: 2,
+      TE: 1,
     };
 
     const baseMultipliers = {
-      QB: 2.2, RB: 1.8, WR: 1.6, TE: 2.4,
+      QB: 2.2,
+      RB: 1.8,
+      WR: 1.6,
+      TE: 2.4,
     };
 
     const currentCount = positionCounts[position] || 0;
     const coreNeeded = coreRequirements[position] || 0;
     const maxNeeded = positionRequirements[position] || 1;
     const baseMultiplier = baseMultipliers[position] || 1.0;
-    
+
     let finalMultiplier = baseMultiplier;
 
     // Position-specific value drops based on scarcity and FLEX eligibility
@@ -173,22 +203,27 @@ export function YourDraftPicks({
       finalMultiplier = baseMultiplier * 0.15; // 85% reduction
     } else if (position === "TE" && currentCount >= coreNeeded) {
       // TE: Drastic drop after 1 TE (limited depth)
-      finalMultiplier = baseMultiplier * 0.20; // 80% reduction
-    } else if ((position === "RB" || position === "WR") && currentCount >= coreNeeded) {
+      finalMultiplier = baseMultiplier * 0.2; // 80% reduction
+    } else if (
+      (position === "RB" || position === "WR") &&
+      currentCount >= coreNeeded
+    ) {
       // RB/WR: More gradual drop due to FLEX eligibility and depth
       if (currentCount >= maxNeeded) {
-        finalMultiplier = baseMultiplier * 0.40; // 60% reduction for excess
+        finalMultiplier = baseMultiplier * 0.4; // 60% reduction for excess
       } else {
         // Gradual reduction between core and max needed
-        const progressToMax = (currentCount - coreNeeded) / (maxNeeded - coreNeeded);
-        finalMultiplier = baseMultiplier * (1 - (progressToMax * 0.50)); // Up to 50% reduction
+        const progressToMax =
+          (currentCount - coreNeeded) / (maxNeeded - coreNeeded);
+        finalMultiplier = baseMultiplier * (1 - progressToMax * 0.5); // Up to 50% reduction
       }
     } else if (currentCount >= maxNeeded) {
       // Heavy penalty for excess players at any position
-      finalMultiplier = baseMultiplier * 0.30; // 70% reduction for excess players
+      finalMultiplier = baseMultiplier * 0.3; // 70% reduction for excess players
     } else {
       // Gradual reduction for positions not yet at core requirement
-      const reductionPerPlayer = position === "QB" || position === "TE" ? 0.25 : 0.15;
+      const reductionPerPlayer =
+        position === "QB" || position === "TE" ? 0.25 : 0.15;
       const reduction = Math.min(currentCount * reductionPerPlayer, 0.6);
       finalMultiplier = Math.max(baseMultiplier * (1 - reduction), 0.4);
     }
@@ -201,7 +236,7 @@ export function YourDraftPicks({
       const pickDifference = currentPickNumber - expectedPickForRank;
       // More generous bonus scaling: up to 100% bonus for major steals
       draftPositionBonus = 1.0 + Math.min(pickDifference / 50, 1.0); // Up to 100% bonus
-      
+
       // Extra bonus for really late steals (50+ picks later than expected)
       if (pickDifference >= 50) {
         draftPositionBonus += Math.min((pickDifference - 50) / 100, 0.5); // Additional 50% bonus
@@ -210,14 +245,15 @@ export function YourDraftPicks({
 
     const overallRankScore = Math.max(0, (300 - overallRank) / 300) * 100;
     const positionRankScore = Math.max(0, (100 - positionRank) / 100) * 100;
-    const projectedPointsScore = Math.min(projectedPoints / 400 * 100, 100);
+    const projectedPointsScore = Math.min((projectedPoints / 400) * 100, 100);
 
-    const compositeValue = (
-      overallRankScore * 0.3 +
-      positionRankScore * 0.25 +
-      projectedPointsScore * 0.35 +
-      (finalMultiplier - 1) * 10
-    ) * finalMultiplier * draftPositionBonus;
+    const compositeValue =
+      (overallRankScore * 0.3 +
+        positionRankScore * 0.25 +
+        projectedPointsScore * 0.35 +
+        (finalMultiplier - 1) * 10) *
+      finalMultiplier *
+      draftPositionBonus;
 
     return Math.round(compositeValue * 10) / 10;
   };
@@ -240,9 +276,7 @@ export function YourDraftPicks({
 
   // Use leagueUsers prop if provided, otherwise fall back to just the user
   const leagueMembers =
-    Array.isArray(leagueUsers) && leagueUsers.length > 0
-      ? leagueUsers
-      : [user];
+    Array.isArray(leagueUsers) && leagueUsers.length > 0 ? leagueUsers : [user];
 
   // Find selected member object
   const selectedMember =
@@ -324,7 +358,7 @@ export function YourDraftPicks({
     const newMemberPicks = draft.picks.filter(
       (pick) => pick.picked_by === selectedMemberId
     );
-    
+
     // Recalculate roster with new member picks
     const newRoster = {
       starters: {},
@@ -576,12 +610,16 @@ export function YourDraftPicks({
           if (pick.player.player_info.projected_2025_points) {
             totalPoints += pick.player.player_info.projected_2025_points;
           }
-          
+
           // Use static value for drafted players, dynamic for best available
           if (pick.isBestAvailable) {
             totalCompositeValue += calculateCompositeValue(pick.player, false);
           } else {
-            totalCompositeValue += calculateCompositeValue(pick.player, true, pick.pick_no);
+            totalCompositeValue += calculateCompositeValue(
+              pick.player,
+              true,
+              pick.pick_no
+            );
           }
           playerCount++;
 
@@ -594,11 +632,22 @@ export function YourDraftPicks({
       });
     });
 
-    return { totalPoints, totalCompositeValue, playerCount, draftedPlayerCount, bestAvailableCount };
+    return {
+      totalPoints,
+      totalCompositeValue,
+      playerCount,
+      draftedPlayerCount,
+      bestAvailableCount,
+    };
   };
 
-  const { totalPoints, totalCompositeValue, playerCount, draftedPlayerCount, bestAvailableCount } =
-    calculateStartingLineupStats();
+  const {
+    totalPoints,
+    totalCompositeValue,
+    playerCount,
+    draftedPlayerCount,
+    bestAvailableCount,
+  } = calculateStartingLineupStats();
 
   const renderPlayer = (pick, position, index, isDragOver = false) => {
     const slotKey = `${position}-${index}`;
@@ -702,10 +751,10 @@ export function YourDraftPicks({
                   Position Rank: #{pick.player.player_info.position_rank}
                 </div>
                 <div className="text-green-400 font-semibold">
-                  Value Score: {isBestAvailable 
+                  Value Score:{" "}
+                  {isBestAvailable
                     ? calculateCompositeValue(pick.player, false)
-                    : calculateCompositeValue(pick.player, true, pick.pick_no)
-                  }
+                    : calculateCompositeValue(pick.player, true, pick.pick_no)}
                 </div>
               </div>
             )}
@@ -809,162 +858,167 @@ export function YourDraftPicks({
         </div>
       )}
 
-      {memberPicks.length === 0 ? (
-        <div className="text-[var(--foreground)] opacity-60 text-sm">
-          No picks yet.
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Weekly Projections Chart */}
-          <WeeklyProjectionsChart
-            roster={getEnhancedRoster()}
-            rosterFormat={rosterFormat}
-            data={data}
-          />
+      <div className="space-y-6">
+        {/* Draft Pick Optimizer - Only show for current user when it's their turn or close to it */}
+        <DraftPickOptimizer
+          user={user}
+          leagueUsers={leagueUsers}
+          data={data}
+          draft={draft}
+          selectedMemberId={selectedMemberId}
+          memberPicks={memberPicks}
+          draftedPlayerIds={draftedPlayerIds}
+          calculateCompositeValue={calculateCompositeValue}
+          rosterFormat={rosterFormat}
+        />
 
-          {/* Starting Lineup */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-md font-semibold text-[var(--foreground)] flex items-center">
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                Starting Lineup
-              </h4>
+        {/* Weekly Projections Chart */}
+        <WeeklyProjectionsChart
+          roster={getEnhancedRoster()}
+          rosterFormat={rosterFormat}
+          data={data}
+        />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[var(--primary)]/10 border border-[var(--primary)]/30 rounded-lg px-3 py-2">
-                  <div className="text-xs font-medium text-[var(--foreground)] opacity-60">
-                    Weekly Average Projected Points
-                  </div>
-                  <div className="text-lg font-bold text-[var(--primary)]">
-                    {(totalPoints / 17).toFixed(2)} pts
-                  </div>
-                  <div className="text-xs opacity-80">
-                    {draftedPlayerCount} drafted
-                    {bestAvailableCount > 0 &&
-                      ` + ${bestAvailableCount} available`}
-                  </div>
+        {/* Starting Lineup */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-md font-semibold text-[var(--foreground)] flex items-center">
+              <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+              Starting Lineup
+            </h4>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-[var(--primary)]/10 border border-[var(--primary)]/30 rounded-lg px-3 py-2">
+                <div className="text-xs font-medium text-[var(--foreground)] opacity-60">
+                  Weekly Average Projected Points
                 </div>
-                
-                <div className="bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2">
-                  <div className="text-xs font-medium text-[var(--foreground)] opacity-60">
-                    Total Team Value Score
-                  </div>
-                  <div className="text-lg font-bold text-green-400">
-                    {totalCompositeValue.toFixed(1)}
-                  </div>
-                  <div className="text-xs opacity-80">
-                    {rosterFormat.reduce((sum, { slots }) => sum + slots, 0)}{" "}
-                    starters
-                  </div>
+                <div className="text-lg font-bold text-[var(--primary)]">
+                  {(totalPoints / 17).toFixed(2)} pts
+                </div>
+                <div className="text-xs opacity-80">
+                  {draftedPlayerCount} drafted
+                  {bestAvailableCount > 0 &&
+                    ` + ${bestAvailableCount} available`}
+                </div>
+              </div>
+
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2">
+                <div className="text-xs font-medium text-[var(--foreground)] opacity-60">
+                  Total Team Value Score
+                </div>
+                <div className="text-lg font-bold text-green-400">
+                  {totalCompositeValue.toFixed(1)}
+                </div>
+                <div className="text-xs opacity-80">
+                  {rosterFormat.reduce((sum, { slots }) => sum + slots, 0)}{" "}
+                  starters
                 </div>
               </div>
             </div>
-            <div className="space-y-3">
-              {rosterFormat.map(({ position, slots, label }) => {
-                const enhancedRoster = getEnhancedRoster();
-
-                // Get already used best available player IDs for this position
-                const usedBestAvailableIds = new Set();
-                enhancedRoster.starters[position].forEach((pick) => {
-                  if (pick?.isBestAvailable) {
-                    usedBestAvailableIds.add(pick.metadata.player_id);
-                  }
-                });
-
-                const bestAvailable = getBestAvailableByPosition(
-                  position,
-                  slots,
-                  usedBestAvailableIds
-                );
-
-                return (
-                  <div key={position}>
-                    <h5 className="text-sm font-medium text-[var(--foreground)] opacity-80 mb-2">
-                      {label} ({slots} slot{slots > 1 ? "s" : ""})
-                    </h5>
-                    <div className="space-y-2">
-                      {enhancedRoster.starters[position].map((pick, index) => {
-                        const isDragOver =
-                          dragOverSlot?.position === position &&
-                          dragOverSlot?.index === index;
-
-                        // For display purposes, show enhanced pick if slot is filled, otherwise original
-                        const originalPick = roster.starters[position][index];
-                        const slotKey = `${position}-${index}`;
-                        const displayPick = filledSlots[slotKey]
-                          ? pick
-                          : originalPick;
-
-                        return (
-                          <div
-                            key={`${position}-${index}`}
-                            className="grid grid-cols-2 gap-4"
-                          >
-                            <div>
-                              <div className="text-xs font-medium text-[var(--foreground)] opacity-60 mb-1">
-                                {filledSlots[slotKey] && pick?.isBestAvailable
-                                  ? "Projected Player"
-                                  : "Your Player"}
-                              </div>
-                              {renderPlayer(
-                                displayPick,
-                                position,
-                                index,
-                                isDragOver
-                              )}
-                            </div>
-                            <div>
-                              <div className="text-xs font-medium text-blue-400 opacity-80 mb-1">
-                                Best Available
-                              </div>
-                              {renderAvailablePlayer(bestAvailable[index])}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
+          <div className="space-y-3">
+            {rosterFormat.map(({ position, slots, label }) => {
+              const enhancedRoster = getEnhancedRoster();
 
-          {/* Bench */}
-          <div>
-            <h4 className="text-md font-semibold text-[var(--foreground)] mb-3 flex items-center">
-              <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
-              Bench ({roster.bench.length} player
-              {roster.bench.length > 1 ? "s" : ""})
-            </h4>
-            <div
-              className={`space-y-2 min-h-[60px] p-3 rounded-lg border-2 border-dashed transition-colors ${
-                dragOverSlot?.position === "BENCH"
-                  ? "border-[var(--primary)] bg-[var(--primary)]/5"
-                  : "border-[var(--border)]/50"
-              }`}
-              onDragOver={(e) =>
-                handleDragOver(e, "BENCH", roster.bench.length)
-              }
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, "BENCH", roster.bench.length)}
-            >
-              {roster.bench.length === 0 ? (
-                <div className="text-center text-[var(--foreground)] opacity-60 py-4">
-                  {dragOverSlot?.position === "BENCH"
-                    ? "Drop player here"
-                    : "No bench players"}
-                </div>
-              ) : (
-                roster.bench.map((pick, index) => (
-                  <div key={pick.pick_id}>
-                    {renderPlayer(pick, "BENCH", index)}
+              // Get already used best available player IDs for this position
+              const usedBestAvailableIds = new Set();
+              enhancedRoster.starters[position].forEach((pick) => {
+                if (pick?.isBestAvailable) {
+                  usedBestAvailableIds.add(pick.metadata.player_id);
+                }
+              });
+
+              const bestAvailable = getBestAvailableByPosition(
+                position,
+                slots,
+                usedBestAvailableIds
+              );
+
+              return (
+                <div key={position}>
+                  <h5 className="text-sm font-medium text-[var(--foreground)] opacity-80 mb-2">
+                    {label} ({slots} slot{slots > 1 ? "s" : ""})
+                  </h5>
+                  <div className="space-y-2">
+                    {enhancedRoster.starters[position].map((pick, index) => {
+                      const isDragOver =
+                        dragOverSlot?.position === position &&
+                        dragOverSlot?.index === index;
+
+                      // For display purposes, show enhanced pick if slot is filled, otherwise original
+                      const originalPick = roster.starters[position][index];
+                      const slotKey = `${position}-${index}`;
+                      const displayPick = filledSlots[slotKey]
+                        ? pick
+                        : originalPick;
+
+                      return (
+                        <div
+                          key={`${position}-${index}`}
+                          className="grid grid-cols-2 gap-4"
+                        >
+                          <div>
+                            <div className="text-xs font-medium text-[var(--foreground)] opacity-60 mb-1">
+                              {filledSlots[slotKey] && pick?.isBestAvailable
+                                ? "Projected Player"
+                                : "Your Player"}
+                            </div>
+                            {renderPlayer(
+                              displayPick,
+                              position,
+                              index,
+                              isDragOver
+                            )}
+                          </div>
+                          <div>
+                            <div className="text-xs font-medium text-blue-400 opacity-80 mb-1">
+                              Best Available
+                            </div>
+                            {renderAvailablePlayer(bestAvailable[index])}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))
-              )}
-            </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      )}
+
+        {/* Bench */}
+        <div>
+          <h4 className="text-md font-semibold text-[var(--foreground)] mb-3 flex items-center">
+            <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+            Bench ({roster.bench.length} player
+            {roster.bench.length > 1 ? "s" : ""})
+          </h4>
+          <div
+            className={`space-y-2 min-h-[60px] p-3 rounded-lg border-2 border-dashed transition-colors ${
+              dragOverSlot?.position === "BENCH"
+                ? "border-[var(--primary)] bg-[var(--primary)]/5"
+                : "border-[var(--border)]/50"
+            }`}
+            onDragOver={(e) => handleDragOver(e, "BENCH", roster.bench.length)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, "BENCH", roster.bench.length)}
+          >
+            {roster.bench.length === 0 ? (
+              <div className="text-center text-[var(--foreground)] opacity-60 py-4">
+                {dragOverSlot?.position === "BENCH"
+                  ? "Drop player here"
+                  : "No bench players"}
+              </div>
+            ) : (
+              roster.bench.map((pick, index) => (
+                <div key={pick.pick_id}>
+                  {renderPlayer(pick, "BENCH", index)}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

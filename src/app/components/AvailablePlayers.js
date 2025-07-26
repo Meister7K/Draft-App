@@ -12,7 +12,7 @@ export function AvailablePlayers({
   selectedManagerId,
   setSelectedManagerId,
   leagueUsers,
-
+  selectedYear, // Add selectedYear as an optional prop
 }) {
   const [selectedPositions, setSelectedPositions] = useState([]);
   const [sortBy, setSortBy] = useState("overall_rank"); // "overall_rank", "projected_2025", "position_rank", "composite_value", "adp_2qb", "adp_ppr", "adp_half_ppr", "adp_std"
@@ -37,9 +37,13 @@ export function AvailablePlayers({
     return positionCounts;
   };
 
+  // Use the draft's season if available, then selectedYear prop, otherwise fall back to current season
+  const year =
+    draft.season ||
+    draft.settings?.season ||
+    selectedYear ||
+    data.metadata.current_season;
 
-  const year = data.metadata.current_season
-  
   // Calculate composite value for a player based on position scarcity and performance metrics
   const calculateCompositeValue = (player, currentPickNumber = null) => {
     const position = player.player_info.position;
@@ -180,7 +184,6 @@ export function AvailablePlayers({
       (p) => !draftedPlayerIds.has(p.player_info.player_id)
     );
 
-    
     // Filter by selected positions
     if (selectedPositions.length > 0) {
       availablePlayers = availablePlayers.filter((p) =>
@@ -219,8 +222,10 @@ export function AvailablePlayers({
         case "adp_rookie":
         case "adp_idp":
           // For ADP, lower values are better (earlier picks)
-          const aADP = a.seasons?.[year]?.season_projected_totals?.[sortBy] || 999;
-          const bADP = b.seasons?.[year]?.season_projected_totals?.[sortBy] || 999;
+          const aADP =
+            a.seasons?.[year]?.season_projected_totals?.[sortBy] || 999;
+          const bADP =
+            b.seasons?.[year]?.season_projected_totals?.[sortBy] || 999;
           return aADP - bADP;
         case "overall_rank":
         default:
@@ -230,7 +235,6 @@ export function AvailablePlayers({
           );
       }
     });
-
 
     return availablePlayers;
   };
@@ -671,7 +675,7 @@ export function AvailablePlayers({
               </button>
             </div>
           </div>
-          
+
           {/* ADP Type Selector */}
           <div className="flex items-center space-x-2">
             <span className="text-sm text-[var(--foreground)] opacity-80">
@@ -681,7 +685,7 @@ export function AvailablePlayers({
               value={selectedADP}
               onChange={(e) => {
                 setSelectedADP(e.target.value);
-                if (sortBy.startsWith('adp_')) {
+                if (sortBy.startsWith("adp_")) {
                   setSortBy(e.target.value);
                 }
               }}
@@ -798,7 +802,12 @@ export function AvailablePlayers({
                     : "text-[var(--foreground)]"
                 }`}
               >
-                ADP ({selectedADP.replace('adp_', '').replace('_', ' ').toUpperCase()})
+                ADP (
+                {selectedADP
+                  .replace("adp_", "")
+                  .replace("_", " ")
+                  .toUpperCase()}
+                )
               </th>
             </tr>
           </thead>
@@ -898,8 +907,12 @@ export function AvailablePlayers({
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm opacity-90">
-                      {player.seasons?.[year]?.season_projected_totals?.[selectedADP] 
-                        ? player.seasons[year].season_projected_totals[selectedADP].toFixed(1)
+                      {player.seasons?.[year]?.season_projected_totals?.[
+                        selectedADP
+                      ]
+                        ? player.seasons[year].season_projected_totals[
+                            selectedADP
+                          ].toFixed(1)
                         : "-"}
                     </td>
                   </tr>
