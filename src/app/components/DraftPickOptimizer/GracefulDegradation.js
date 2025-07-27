@@ -358,7 +358,8 @@ export function createDegradedContext(partialContext = {}) {
  * Check if the system can provide meaningful recommendations
  */
 export function canProvideRecommendations(players, context) {
-  const validPlayers = validatePlayerArray(players, { strict: true });
+  // Use less strict validation during active drafts to include more players
+  const validPlayers = validatePlayerArray(players, { strict: false, fillDefaults: true });
   const { isValid } = validateDraftContext(context);
   
   const hasMinimumData = validPlayers.length > 0;

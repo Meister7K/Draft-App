@@ -90,10 +90,10 @@ export function estimatePickRange(player, draftContext, competitionFactor) {
   
   // Adjust for position scarcity
   const positionAdjustment = {
-    QB: -5,  // QBs often go later than rank suggests
+    QB: -2,  // QBs often go later than rank suggests
     RB: 5,   // RBs often go earlier due to scarcity
     WR: 0,   // WRs usually go close to rank
-    TE: 10   // TEs often go earlier due to extreme scarcity
+    TE: 5   // TEs often go earlier due to extreme scarcity
   };
   
   basePick += positionAdjustment[position] || 0;

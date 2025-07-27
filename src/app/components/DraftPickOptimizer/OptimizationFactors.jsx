@@ -85,9 +85,16 @@ export function OptimizationFactors({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="text-lg font-semibold text-[var(--foreground)]">
+    <div 
+      className="space-y-3"
+      role="region"
+      aria-labelledby="optimization-factors-heading"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
+        <h4 
+          id="optimization-factors-heading"
+          className="text-base sm:text-lg font-semibold text-[var(--foreground)]"
+        >
           Optimization Factors
         </h4>
         {showComparison && previousFactors && (
@@ -108,19 +115,27 @@ export function OptimizationFactors({
           <div 
             key={factorKey}
             className="bg-[var(--secondary)]/30 rounded-lg border border-[var(--border)] overflow-hidden"
+            role="region"
+            aria-labelledby={`factor-${factorKey}-heading`}
           >
-            {/* Factor Header */}
-            <div 
-              className="p-4 cursor-pointer hover:bg-[var(--secondary)]/50 transition-colors"
+            {/* Factor Header - Touch-friendly */}
+            <button 
+              className="w-full p-3 sm:p-4 cursor-pointer hover:bg-[var(--secondary)]/50 focus:bg-[var(--secondary)]/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset transition-colors touch-target text-left"
               onClick={() => toggleFactorExpansion(factorKey)}
+              aria-expanded={isExpanded}
+              aria-controls={`factor-${factorKey}-details`}
+              aria-describedby={`factor-${factorKey}-description`}
             >
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-3">
-                  <span className="font-medium text-[var(--foreground)]">
+                <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+                  <span 
+                    id={`factor-${factorKey}-heading`}
+                    className="font-medium text-[var(--foreground)] text-sm sm:text-base truncate"
+                  >
                     {displayName}
                   </span>
                   {change && (
-                    <div className={`text-xs px-2 py-1 rounded-full ${
+                    <div className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
                       change.isIncrease 
                         ? 'bg-green-500/20 text-green-400' 
                         : 'bg-red-500/20 text-red-400'
@@ -129,41 +144,69 @@ export function OptimizationFactors({
                     </div>
                   )}
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className={`font-bold text-lg ${getFactorColor(score)}`}>
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <span 
+                    className={`font-bold text-base sm:text-lg ${getFactorColor(score)}`}
+                    aria-label={`${displayName} score: ${formatFactorScore(score)} out of 100`}
+                  >
                     {formatFactorScore(score)}
                   </span>
-                  <span className="text-xs opacity-60">/100</span>
-                  <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                  <span className="text-xs opacity-60" aria-hidden="true">/100</span>
+                  <div 
+                    className={`transform transition-transform text-xs ${isExpanded ? 'rotate-180' : ''}`}
+                    aria-hidden="true"
+                  >
                     ▼
                   </div>
                 </div>
               </div>
 
               {/* Progress Bar */}
-              <div className="w-full bg-[var(--border)] rounded-full h-3 mb-2">
+              <div 
+                className="w-full bg-[var(--border)] rounded-full h-2 sm:h-3 mb-2"
+                role="progressbar"
+                aria-valuenow={score}
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-label={`${displayName} score progress`}
+              >
                 <div
-                  className={`h-3 rounded-full transition-all duration-500 ${getFactorBgColor(score)}`}
+                  className={`h-2 sm:h-3 rounded-full transition-all duration-500 ${getFactorBgColor(score)}`}
                   style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
                 />
               </div>
 
               {/* Basic Description */}
-              <div className="text-sm opacity-80">
+              <div 
+                id={`factor-${factorKey}-description`}
+                className="text-xs sm:text-sm opacity-80"
+              >
                 {description}
               </div>
-            </div>
+            </button>
 
-            {/* Expanded Details */}
+            {/* Expanded Details - Mobile optimized */}
             {isExpanded && (
-              <div className="px-4 pb-4 border-t border-[var(--border)] bg-[var(--secondary)]/20">
+              <div 
+                id={`factor-${factorKey}-details`}
+                className="px-3 sm:px-4 pb-3 sm:pb-4 border-t border-[var(--border)] bg-[var(--secondary)]/20"
+                role="region"
+                aria-labelledby={`factor-${factorKey}-details-heading`}
+              >
                 <div className="pt-3 space-y-3">
+                  <h5 
+                    id={`factor-${factorKey}-details-heading`}
+                    className="sr-only"
+                  >
+                    Detailed {displayName} Analysis
+                  </h5>
+                  
                   {/* Detailed Explanation */}
                   <div>
-                    <div className="text-sm font-medium mb-1 text-[var(--foreground)]">
+                    <div className="text-xs sm:text-sm font-medium mb-1 text-[var(--foreground)]">
                       Analysis:
                     </div>
-                    <div className="text-sm opacity-90">
+                    <div className="text-xs sm:text-sm opacity-90">
                       {factorData.explanation}
                     </div>
                   </div>
@@ -171,19 +214,19 @@ export function OptimizationFactors({
                   {/* Factor-specific additional data */}
                   {factorData.weeklyImprovement && (
                     <div>
-                      <div className="text-sm font-medium mb-1 text-[var(--foreground)]">
+                      <div className="text-xs sm:text-sm font-medium mb-1 text-[var(--foreground)]">
                         Impact:
                       </div>
-                      <div className="text-sm opacity-90">
+                      <div className="text-xs sm:text-sm opacity-90">
                         Weekly improvement: +{factorData.weeklyImprovement.toFixed(1)} fantasy points
                       </div>
                       {factorData.seasonImprovement && (
-                        <div className="text-sm opacity-90">
+                        <div className="text-xs sm:text-sm opacity-90">
                           Season improvement: +{factorData.seasonImprovement.toFixed(1)} fantasy points
                         </div>
                       )}
                       {factorData.impactType && (
-                        <div className="text-sm opacity-90">
+                        <div className="text-xs sm:text-sm opacity-90">
                           Impact type: {factorData.impactType.replace(/_/g, ' ')}
                         </div>
                       )}
@@ -192,10 +235,10 @@ export function OptimizationFactors({
 
                   {factorData.riskLevel && (
                     <div>
-                      <div className="text-sm font-medium mb-1 text-[var(--foreground)]">
+                      <div className="text-xs sm:text-sm font-medium mb-1 text-[var(--foreground)]">
                         Risk Assessment:
                       </div>
-                      <div className={`text-sm font-medium ${
+                      <div className={`text-xs sm:text-sm font-medium ${
                         factorData.riskLevel === 'low' ? 'text-green-400' :
                         factorData.riskLevel === 'medium' ? 'text-yellow-400' :
                         'text-red-400'
@@ -207,14 +250,14 @@ export function OptimizationFactors({
 
                   {factorData.estimatedPickRange && (
                     <div>
-                      <div className="text-sm font-medium mb-1 text-[var(--foreground)]">
+                      <div className="text-xs sm:text-sm font-medium mb-1 text-[var(--foreground)]">
                         Draft Projection:
                       </div>
-                      <div className="text-sm opacity-90">
+                      <div className="text-xs sm:text-sm opacity-90">
                         Expected range: Picks {factorData.estimatedPickRange.earliest}-{factorData.estimatedPickRange.latest}
                       </div>
                       {factorData.estimatedPickRange.mostLikely && (
-                        <div className="text-sm opacity-90">
+                        <div className="text-xs sm:text-sm opacity-90">
                           Most likely: Pick {factorData.estimatedPickRange.mostLikely}
                         </div>
                       )}
@@ -223,10 +266,10 @@ export function OptimizationFactors({
 
                   {/* Score Interpretation */}
                   <div>
-                    <div className="text-sm font-medium mb-1 text-[var(--foreground)]">
+                    <div className="text-xs sm:text-sm font-medium mb-1 text-[var(--foreground)]">
                       Score Interpretation:
                     </div>
-                    <div className="text-sm opacity-90">
+                    <div className="text-xs sm:text-sm opacity-90">
                       {score >= 80 && "Excellent - This factor strongly supports drafting this player"}
                       {score >= 60 && score < 80 && "Good - This factor moderately supports drafting this player"}
                       {score >= 40 && score < 60 && "Average - This factor is neutral regarding this player"}
@@ -262,15 +305,15 @@ export function OptimizationFactors({
         );
       })}
 
-      {/* Overall Factor Summary */}
-      <div className="mt-6 p-4 bg-[var(--primary)]/10 rounded-lg border border-[var(--primary)]/30">
-        <div className="text-sm font-medium mb-2 text-[var(--foreground)]">
+      {/* Overall Factor Summary - Responsive */}
+      <div className="mt-6 p-3 sm:p-4 bg-[var(--primary)]/10 rounded-lg border border-[var(--primary)]/30">
+        <div className="text-xs sm:text-sm font-medium mb-2 text-[var(--foreground)]">
           Factor Summary:
         </div>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
           <div>
             <span className="opacity-80">Strongest Factor:</span>
-            <span className="ml-2 font-semibold text-green-400">
+            <span className="ml-2 font-semibold text-green-400 block sm:inline">
               {getFactorDisplayName(
                 Object.entries(factors).reduce((max, [key, data]) => 
                   data.score > factors[max].score ? key : max
@@ -280,7 +323,7 @@ export function OptimizationFactors({
           </div>
           <div>
             <span className="opacity-80">Weakest Factor:</span>
-            <span className="ml-2 font-semibold text-red-400">
+            <span className="ml-2 font-semibold text-red-400 block sm:inline">
               {getFactorDisplayName(
                 Object.entries(factors).reduce((min, [key, data]) => 
                   data.score < factors[min].score ? key : min
