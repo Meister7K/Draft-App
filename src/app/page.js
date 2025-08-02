@@ -31,9 +31,7 @@ export default function Home() {
   useEffect(() => {
     const loadPlayerDatabase = async () => {
       try {
-        const response = await fetch(
-          "/db/fantasy_football_db.json"
-        );
+        const response = await fetch("/db/fantasy_football_db.json");
         if (response.ok) {
           const jsonData = await response.json();
           setPlayerDatabase(jsonData);
@@ -77,9 +75,9 @@ export default function Home() {
         updatedDraft.status !== draft.status
       ) {
         setDraftData({ ...updatedDraft, picks: picksData });
-        console.log(
-          `Draft updated: ${picksData.length} picks, status: ${updatedDraft.status}`
-        );
+        // console.log(
+        //   `Draft updated: ${picksData.length} picks, status: ${updatedDraft.status}`
+        // );
       }
 
       // If draft is complete, stop polling
@@ -88,7 +86,7 @@ export default function Home() {
           clearInterval(pollingInterval);
           setPollingInterval(null);
         }
-        console.log("Draft completed, stopping auto-updates");
+        // console.log("Draft completed, stopping auto-updates");
       }
     } catch (err) {
       console.error("Error updating draft data:", err);
@@ -118,9 +116,9 @@ export default function Home() {
       const frequencyText =
         pollInterval < 1000 ? `${pollInterval}ms` : `${pollInterval / 1000}s`;
       setUpdateFrequency(frequencyText);
-      console.log(
-        `Started auto-updates every ${pollInterval}ms for ${selectedLeague.status} draft`
-      );
+      // console.log(
+      //   `Started auto-updates every ${pollInterval}ms for ${selectedLeague.status} draft`
+      // );
 
       setPollingInterval(interval);
 

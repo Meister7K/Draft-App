@@ -91,7 +91,7 @@ export function YourDraftPicks({ user, leagueUsers, data, draft }) {
       QB: 2.2,
       RB: 1.8,
       WR: 1.6,
-      TE: 2.4,
+      TE: 1.25, // Reduced from 2.4 to better reflect TE value relative to other positions
     };
 
     const currentCount = positionCountsAtDraft[position] || 0;
@@ -187,7 +187,7 @@ export function YourDraftPicks({ user, leagueUsers, data, draft }) {
       QB: 2.2,
       RB: 1.8,
       WR: 1.6,
-      TE: 2.4,
+      TE: 1.25, // Reduced from 2.4 to better reflect TE value relative to other positions
     };
 
     const currentCount = positionCounts[position] || 0;
@@ -860,17 +860,19 @@ export function YourDraftPicks({ user, leagueUsers, data, draft }) {
 
       <div className="space-y-6">
         {/* Draft Pick Optimizer - Only show for current user when it's their turn or close to it */}
-        <DraftPickOptimizer
-          user={user}
-          leagueUsers={leagueUsers}
-          data={data}
-          draft={draft}
-          selectedMemberId={selectedMemberId}
-          memberPicks={memberPicks}
-          draftedPlayerIds={draftedPlayerIds}
-          calculateCompositeValue={calculateCompositeValue}
-          rosterFormat={rosterFormat}
-        />
+        <div className="draft-optimizer-container">
+          <DraftPickOptimizer
+            user={user}
+            leagueUsers={leagueUsers}
+            data={data}
+            draft={draft}
+            selectedMemberId={selectedMemberId}
+            memberPicks={memberPicks}
+            draftedPlayerIds={draftedPlayerIds}
+            calculateCompositeValue={calculateCompositeValue}
+            rosterFormat={rosterFormat}
+          />
+        </div>
 
         {/* Weekly Projections Chart */}
         <WeeklyProjectionsChart

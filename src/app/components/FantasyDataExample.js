@@ -19,7 +19,7 @@ const FantasyDataExample = () => {
     isLoaded,
   } = useFantasyData();
 
-  console.log(players);
+  // console.log(players);
 
   const [selectedPosition, setSelectedPosition] = useState("");
   const [selectedPlayerId, setSelectedPlayerId] = useState("");

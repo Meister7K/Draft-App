@@ -8,6 +8,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import styles from "./DraftPickOptimizer.module.css";
+import SafeAnimationWrapper from "./SafeAnimationWrapper";
 import { RecommendationCard } from "./RecommendationCard";
 import { OptimizationFactors } from "./OptimizationFactors";
 import {
@@ -67,15 +69,12 @@ export function DraftPickOptimizer({
   const [lastUpdated, setLastUpdated] = useState(null);
   const [showFactorDetails, setShowFactorDetails] = useState(false);
 
-  // UI Polish and Animation States
-  const [isAnimating, setIsAnimating] = useState(false);
+  // UI States (keeping necessary states, removed problematic animation ones)
   const [previousRecommendations, setPreviousRecommendations] = useState([]);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [showUpdateIndicator, setShowUpdateIndicator] = useState(false);
-  const [expandedCards, setExpandedCards] = useState(new Set());
-  const [hoveredCard, setHoveredCard] = useState(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showDocumentation, setShowDocumentation] = useState(false);
-  const [selectedRecommendation, setSelectedRecommendation] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const [fallbackMode, setFallbackMode] = useState(false);
   const [degradedMode, setDegradedMode] = useState(false);
@@ -352,6 +351,7 @@ export function DraftPickOptimizer({
           memberPicks,
           draftedPlayerIds: debouncedDraftedPlayerIds,
           selectedMemberId,
+          leagueUsers, // Include leagueUsers in degraded context
         });
         setDegradedMode(true);
         return degradedContext;
@@ -365,6 +365,7 @@ export function DraftPickOptimizer({
       calculateCompositeValue,
       currentPickNumber: debouncedCurrentPickNumber,
       picksUntilNext: userTurnInfo.picksUntilTurn,
+      leagueUsers, // Add leagueUsers to context for validation
       ...leagueAnalysisData,
       memberPicks,
       draftedPlayerIds: debouncedDraftedPlayerIds,
@@ -392,6 +393,8 @@ export function DraftPickOptimizer({
     debouncedDraftedPlayerIds,
     selectedMemberId,
     availablePlayers.length,
+    leagueUsers, // Add leagueUsers dependency
+    rosterFormat, // Add rosterFormat dependency
   ]);
 
   // Fallback calculation function for when main optimization fails
@@ -1020,59 +1023,14 @@ export function DraftPickOptimizer({
 
   return (
     <ErrorBoundary showDetails={process.env.NODE_ENV === "development"}>
-      <div
-        className="mt-6 p-3 sm:p-6 bg-[var(--secondary)]/20 rounded-lg border border-[var(--border)]"
-        role="region"
-        aria-labelledby="optimizer-heading"
-        aria-describedby="optimizer-description"
-      >
-        <style jsx>{`
-          @keyframes fadeInUp {
-            from {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-
-          .recommendation-card {
-            animation: fadeInUp 0.3s ease-out forwards;
-          }
-
-          .performance-warning {
-            animation: pulse 2s infinite;
-          }
-
-          @keyframes pulse {
-            0%,
-            100% {
-              opacity: 1;
-            }
-            50% {
-              opacity: 0.5;
-            }
-          }
-
-          /* Hide scrollbar for mobile horizontal scroll */
-          .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-          }
-          .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-          }
-
-          /* Touch-friendly interactions */
-          @media (hover: none) and (pointer: coarse) {
-            .touch-target {
-              min-height: 44px;
-              min-width: 44px;
-            }
-          }
-        `}</style>
+      <SafeAnimationWrapper>
+        <div
+          className={`mt-6 p-3 sm:p-6 bg-[var(--secondary)]/20 rounded-lg border border-[var(--border)] ${styles.optimizerContainer}`}
+          role="region"
+          aria-labelledby="optimizer-heading"
+          aria-describedby="optimizer-description"
+        >
+        {/* Removed inline styles to prevent animation conflicts */}
         {/* Header - Responsive */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
           <div className="flex-1">
@@ -1292,10 +1250,9 @@ export function DraftPickOptimizer({
                 <div
                   key={recommendation.playerId}
                   role="listitem"
-                  className="transform transition-all duration-300 ease-in-out"
+                  className={`transform transition-opacity duration-300 ease-in-out ${styles.fadeInAnimation}`}
                   style={{
                     animationDelay: `${index * 50}ms`,
-                    animation: "fadeInUp 0.3s ease-out forwards",
                   }}
                 >
                   <RecommendationCard
@@ -1342,10 +1299,9 @@ export function DraftPickOptimizer({
                 {recommendations.map((recommendation, index) => (
                   <div
                     key={recommendation.playerId}
-                    className="flex-none w-72 transform transition-all duration-300 ease-in-out snap-start"
+                    className={`flex-none w-72 transform transition-opacity duration-300 ease-in-out snap-start ${styles.fadeInAnimation}`}
                     style={{
                       animationDelay: `${index * 50}ms`,
-                      animation: "fadeInUp 0.3s ease-out forwards",
                     }}
                   >
                     <RecommendationCard
@@ -1567,13 +1523,14 @@ export function DraftPickOptimizer({
             </div>
           </div>
         )}
-      </div>
+        </div>
 
-      {/* User Documentation Modal */}
-      <UserDocumentation
-        isOpen={showDocumentation}
-        onClose={() => setShowDocumentation(false)}
-      />
+        {/* User Documentation Modal */}
+        <UserDocumentation
+          isOpen={showDocumentation}
+          onClose={() => setShowDocumentation(false)}
+        />
+      </SafeAnimationWrapper>
     </ErrorBoundary>
   );
 }

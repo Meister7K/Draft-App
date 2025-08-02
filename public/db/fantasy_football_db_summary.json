@@ -1,44 +1,44 @@
 {
-  "total_players": 195,
+  "total_players": 260,
   "positions": {
-    "QB": 30,
-    "RB": 75,
-    "WR": 75,
-    "TE": 15
+    "QB": 40,
+    "RB": 100,
+    "WR": 100,
+    "TE": 20
   },
   "teams": {
-    "BUF": 7,
-    "BAL": 6,
-    "WAS": 6,
-    "PHI": 6,
-    "CIN": 6,
-    "KC": 7,
-    "DEN": 7,
-    "TB": 7,
-    "SF": 7,
+    "BUF": 9,
+    "BAL": 8,
+    "WAS": 7,
+    "PHI": 7,
+    "CIN": 7,
+    "KC": 10,
+    "DEN": 9,
+    "TB": 8,
+    "SF": 9,
     "DET": 6,
-    "ARI": 6,
-    "NYJ": 5,
-    "MIN": 6,
-    "DAL": 7,
-    "NE": 7,
-    "JAX": 7,
-    "LAC": 6,
+    "ARI": 8,
+    "NYJ": 6,
+    "MIN": 8,
+    "DAL": 9,
+    "NE": 9,
     "CHI": 8,
-    "HOU": 6,
-    "GB": 7,
-    "IND": 7,
-    "TEN": 4,
-    "ATL": 5,
-    "MIA": 5,
-    "CAR": 5,
-    "LV": 6,
-    "SEA": 5,
-    "PIT": 4,
-    "LAR": 6,
-    "NO": 6,
-    "CLE": 6,
-    "NYG": 6
+    "JAX": 8,
+    "LAC": 7,
+    "HOU": 10,
+    "GB": 9,
+    "ATL": 7,
+    "TEN": 7,
+    "MIA": 7,
+    "CAR": 8,
+    "LV": 7,
+    "SEA": 9,
+    "LAR": 8,
+    "PIT": 7,
+    "NO": 8,
+    "IND": 11,
+    "NYG": 9,
+    "CLE": 10
   },
   "seasons_covered": [
     2004,
@@ -64,8 +64,8 @@
     2024,
     2025
   ],
-  "total_weeks": 20174,
-  "selection_criteria": "Top players per position based on 2025 fantasy point projections (QB: 30, RB: 75, WR: 75, TE: 15)",
+  "total_weeks": 26560,
+  "selection_criteria": "Top players per position based on 2025 fantasy point projections (QB: 40, RB: 100, WR: 100, TE: 20)",
   "top_players_by_projected_points": {
     "QB": [
       {
@@ -187,48 +187,48 @@
         "team": "SF",
         "projected_2025_points": 243.5,
         "position_rank": 5,
-        "overall_rank": 31,
+        "overall_rank": 29,
         "years_exp": 8
       },
       {
         "name": "Ashton Jeanty",
         "team": "LV",
-        "projected_2025_points": 236.9,
+        "projected_2025_points": 242.9,
         "position_rank": 6,
-        "overall_rank": 36,
+        "overall_rank": 30,
         "years_exp": 0
-      },
-      {
-        "name": "Josh Jacobs",
-        "team": "GB",
-        "projected_2025_points": 236.5,
-        "position_rank": 7,
-        "overall_rank": 38,
-        "years_exp": 6
-      },
-      {
-        "name": "Bucky Irving",
-        "team": "TB",
-        "projected_2025_points": 231.4,
-        "position_rank": 8,
-        "overall_rank": 40,
-        "years_exp": 1
       },
       {
         "name": "De'Von Achane",
         "team": "MIA",
-        "projected_2025_points": 231.1,
-        "position_rank": 9,
-        "overall_rank": 41,
+        "projected_2025_points": 236.6,
+        "position_rank": 7,
+        "overall_rank": 35,
         "years_exp": 2
       },
       {
         "name": "Jonathan Taylor",
         "team": "IND",
         "projected_2025_points": 230.9,
-        "position_rank": 10,
-        "overall_rank": 42,
+        "position_rank": 8,
+        "overall_rank": 37,
         "years_exp": 5
+      },
+      {
+        "name": "Josh Jacobs",
+        "team": "GB",
+        "projected_2025_points": 225,
+        "position_rank": 9,
+        "overall_rank": 42,
+        "years_exp": 6
+      },
+      {
+        "name": "Bucky Irving",
+        "team": "TB",
+        "projected_2025_points": 220,
+        "position_rank": 10,
+        "overall_rank": 44,
+        "years_exp": 1
       }
     ],
     "WR": [
@@ -243,9 +243,9 @@
       {
         "name": "Justin Jefferson",
         "team": "MIN",
-        "projected_2025_points": 245.3,
+        "projected_2025_points": 239.9,
         "position_rank": 2,
-        "overall_rank": 27,
+        "overall_rank": 33,
         "years_exp": 5
       },
       {
@@ -253,7 +253,7 @@
         "team": "DAL",
         "projected_2025_points": 236.6,
         "position_rank": 3,
-        "overall_rank": 37,
+        "overall_rank": 36,
         "years_exp": 5
       },
       {
@@ -261,7 +261,7 @@
         "team": "HOU",
         "projected_2025_points": 228.6,
         "position_rank": 4,
-        "overall_rank": 43,
+        "overall_rank": 39,
         "years_exp": 4
       },
       {
@@ -269,7 +269,7 @@
         "team": "LAR",
         "projected_2025_points": 227.7,
         "position_rank": 5,
-        "overall_rank": 44,
+        "overall_rank": 40,
         "years_exp": 2
       },
       {
@@ -277,7 +277,7 @@
         "team": "JAX",
         "projected_2025_points": 222.8,
         "position_rank": 6,
-        "overall_rank": 45,
+        "overall_rank": 43,
         "years_exp": 1
       },
       {
@@ -285,7 +285,7 @@
         "team": "DET",
         "projected_2025_points": 219.8,
         "position_rank": 7,
-        "overall_rank": 46,
+        "overall_rank": 45,
         "years_exp": 4
       },
       {
@@ -293,7 +293,7 @@
         "team": "NYG",
         "projected_2025_points": 215.7,
         "position_rank": 8,
-        "overall_rank": 47,
+        "overall_rank": 46,
         "years_exp": 1
       },
       {
@@ -301,7 +301,7 @@
         "team": "PHI",
         "projected_2025_points": 203.2,
         "position_rank": 9,
-        "overall_rank": 50,
+        "overall_rank": 49,
         "years_exp": 6
       },
       {
@@ -309,7 +309,7 @@
         "team": "ATL",
         "projected_2025_points": 201.7,
         "position_rank": 10,
-        "overall_rank": 52,
+        "overall_rank": 50,
         "years_exp": 3
       }
     ],
@@ -319,7 +319,7 @@
         "team": "LV",
         "projected_2025_points": 185.3,
         "position_rank": 1,
-        "overall_rank": 63,
+        "overall_rank": 61,
         "years_exp": 1
       },
       {
@@ -327,7 +327,7 @@
         "team": "ARI",
         "projected_2025_points": 182.5,
         "position_rank": 2,
-        "overall_rank": 64,
+        "overall_rank": 63,
         "years_exp": 3
       },
       {
@@ -335,7 +335,7 @@
         "team": "SF",
         "projected_2025_points": 174,
         "position_rank": 3,
-        "overall_rank": 72,
+        "overall_rank": 70,
         "years_exp": 8
       },
       {
@@ -343,7 +343,7 @@
         "team": "DET",
         "projected_2025_points": 149.2,
         "position_rank": 4,
-        "overall_rank": 105,
+        "overall_rank": 103,
         "years_exp": 2
       },
       {
@@ -365,9 +365,9 @@
       {
         "name": "Travis Kelce",
         "team": "KC",
-        "projected_2025_points": 135.8,
+        "projected_2025_points": 132.7,
         "position_rank": 7,
-        "overall_rank": 119,
+        "overall_rank": 122,
         "years_exp": 12
       },
       {
@@ -375,23 +375,23 @@
         "team": "CLE",
         "projected_2025_points": 121.6,
         "position_rank": 8,
-        "overall_rank": 131,
+        "overall_rank": 134,
         "years_exp": 8
-      },
-      {
-        "name": "Dallas Goedert",
-        "team": "PHI",
-        "projected_2025_points": 119.5,
-        "position_rank": 9,
-        "overall_rank": 135,
-        "years_exp": 7
       },
       {
         "name": "Tyler Warren",
         "team": "IND",
         "projected_2025_points": 118,
+        "position_rank": 9,
+        "overall_rank": 139,
+        "years_exp": 0
+      },
+      {
+        "name": "Colston Loveland",
+        "team": "CHI",
+        "projected_2025_points": 117.8,
         "position_rank": 10,
-        "overall_rank": 136,
+        "overall_rank": 140,
         "years_exp": 0
       }
     ]
@@ -403,8 +403,8 @@
         "position": "QB",
         "team": "LAR",
         "value": 59809,
-        "position_rank": 29,
-        "overall_rank": 39
+        "position_rank": 27,
+        "overall_rank": 38
       },
       {
         "name": "Aaron Rodgers",
@@ -412,7 +412,31 @@
         "team": "PIT",
         "value": 58585,
         "position_rank": 28,
-        "overall_rank": 35
+        "overall_rank": 41
+      },
+      {
+        "name": "Russell Wilson",
+        "position": "QB",
+        "team": "NYG",
+        "value": 46135,
+        "position_rank": 31,
+        "overall_rank": 85
+      },
+      {
+        "name": "Kirk Cousins",
+        "position": "QB",
+        "team": "ATL",
+        "value": 42979,
+        "position_rank": 36,
+        "overall_rank": 233
+      },
+      {
+        "name": "Joe Flacco",
+        "position": "QB",
+        "team": "CLE",
+        "value": 42726,
+        "position_rank": 32,
+        "overall_rank": 127
       },
       {
         "name": "Jared Goff",
@@ -453,30 +477,6 @@
         "value": 24832,
         "position_rank": 8,
         "overall_rank": 8
-      },
-      {
-        "name": "Justin Herbert",
-        "position": "QB",
-        "team": "LAC",
-        "value": 21093,
-        "position_rank": 18,
-        "overall_rank": 19
-      },
-      {
-        "name": "Lamar Jackson",
-        "position": "QB",
-        "team": "BAL",
-        "value": 20059,
-        "position_rank": 2,
-        "overall_rank": 2
-      },
-      {
-        "name": "Kyler Murray",
-        "position": "QB",
-        "team": "ARI",
-        "value": 19498,
-        "position_rank": 12,
-        "overall_rank": 12
       }
     ],
     "rushing_yards": [
@@ -493,8 +493,8 @@
         "position": "RB",
         "team": "HOU",
         "value": 7440,
-        "position_rank": 17,
-        "overall_rank": 59
+        "position_rank": 29,
+        "overall_rank": 102
       },
       {
         "name": "Saquon Barkley",
@@ -509,32 +509,32 @@
         "position": "RB",
         "team": "MIN",
         "value": 7078,
-        "position_rank": 28,
-        "overall_rank": 94
+        "position_rank": 27,
+        "overall_rank": 96
       },
       {
         "name": "Josh Jacobs",
         "position": "RB",
         "team": "GB",
         "value": 6874,
-        "position_rank": 7,
-        "overall_rank": 38
+        "position_rank": 9,
+        "overall_rank": 42
       },
       {
         "name": "Nick Chubb",
         "position": "RB",
         "team": "HOU",
         "value": 6843,
-        "position_rank": 59,
-        "overall_rank": 179
+        "position_rank": 53,
+        "overall_rank": 184
       },
       {
         "name": "Alvin Kamara",
         "position": "RB",
         "team": "NO",
         "value": 6779,
-        "position_rank": 19,
-        "overall_rank": 62
+        "position_rank": 18,
+        "overall_rank": 60
       },
       {
         "name": "Christian McCaffrey",
@@ -542,7 +542,7 @@
         "team": "SF",
         "value": 6387,
         "position_rank": 5,
-        "overall_rank": 31
+        "overall_rank": 29
       },
       {
         "name": "Lamar Jackson",
@@ -557,18 +557,26 @@
         "position": "RB",
         "team": "IND",
         "value": 6013,
-        "position_rank": 10,
-        "overall_rank": 42
+        "position_rank": 8,
+        "overall_rank": 37
       }
     ],
     "receiving_yards": [
+      {
+        "name": "DeAndre Hopkins",
+        "position": "WR",
+        "team": "BAL",
+        "value": 12965,
+        "position_rank": 82,
+        "overall_rank": 189
+      },
       {
         "name": "Mike Evans",
         "position": "WR",
         "team": "TB",
         "value": 12684,
         "position_rank": 14,
-        "overall_rank": 61
+        "overall_rank": 59
       },
       {
         "name": "Travis Kelce",
@@ -576,7 +584,7 @@
         "team": "KC",
         "value": 12151,
         "position_rank": 7,
-        "overall_rank": 119
+        "overall_rank": 122
       },
       {
         "name": "Davante Adams",
@@ -584,7 +592,7 @@
         "team": "LAR",
         "value": 11844,
         "position_rank": 18,
-        "overall_rank": 68
+        "overall_rank": 66
       },
       {
         "name": "Tyreek Hill",
@@ -592,55 +600,47 @@
         "team": "MIA",
         "value": 11098,
         "position_rank": 12,
-        "overall_rank": 54
+        "overall_rank": 53
       },
       {
         "name": "Stefon Diggs",
         "position": "WR",
         "team": "NE",
         "value": 10517,
-        "position_rank": 49,
-        "overall_rank": 120
+        "position_rank": 45,
+        "overall_rank": 110
+      },
+      {
+        "name": "Brandin Cooks",
+        "position": "WR",
+        "team": "NO",
+        "value": 9532,
+        "position_rank": 94,
+        "overall_rank": 205
+      },
+      {
+        "name": "Tyler Lockett",
+        "position": "WR",
+        "team": "TEN",
+        "value": 8594,
+        "position_rank": 98,
+        "overall_rank": 210
       },
       {
         "name": "Adam Thielen",
         "position": "WR",
         "team": "CAR",
         "value": 8311,
-        "position_rank": 60,
-        "overall_rank": 141
+        "position_rank": 61,
+        "overall_rank": 145
       },
       {
         "name": "Zach Ertz",
         "position": "TE",
         "team": "WAS",
         "value": 8088,
-        "position_rank": 15,
-        "overall_rank": 150
-      },
-      {
-        "name": "Cooper Kupp",
-        "position": "WR",
-        "team": "SEA",
-        "value": 7776,
-        "position_rank": 50,
-        "overall_rank": 121
-      },
-      {
-        "name": "DJ Moore",
-        "position": "WR",
-        "team": "CHI",
-        "value": 7531,
-        "position_rank": 25,
-        "overall_rank": 77
-      },
-      {
-        "name": "Justin Jefferson",
-        "position": "WR",
-        "team": "MIN",
-        "value": 7432,
-        "position_rank": 2,
-        "overall_rank": 27
+        "position_rank": 18,
+        "overall_rank": 165
       }
     ],
     "receptions": [
@@ -650,7 +650,15 @@
         "team": "KC",
         "value": 1004,
         "position_rank": 7,
-        "overall_rank": 119
+        "overall_rank": 122
+      },
+      {
+        "name": "DeAndre Hopkins",
+        "position": "WR",
+        "team": "BAL",
+        "value": 984,
+        "position_rank": 82,
+        "overall_rank": 189
       },
       {
         "name": "Davante Adams",
@@ -658,15 +666,15 @@
         "team": "LAR",
         "value": 957,
         "position_rank": 18,
-        "overall_rank": 68
+        "overall_rank": 66
       },
       {
         "name": "Stefon Diggs",
         "position": "WR",
         "team": "NE",
         "value": 859,
-        "position_rank": 49,
-        "overall_rank": 120
+        "position_rank": 45,
+        "overall_rank": 110
       },
       {
         "name": "Mike Evans",
@@ -674,7 +682,7 @@
         "team": "TB",
         "value": 836,
         "position_rank": 14,
-        "overall_rank": 61
+        "overall_rank": 59
       },
       {
         "name": "Tyreek Hill",
@@ -682,47 +690,39 @@
         "team": "MIA",
         "value": 798,
         "position_rank": 12,
-        "overall_rank": 54
+        "overall_rank": 53
       },
       {
         "name": "Zach Ertz",
         "position": "TE",
         "team": "WAS",
         "value": 775,
-        "position_rank": 15,
-        "overall_rank": 150
+        "position_rank": 18,
+        "overall_rank": 165
+      },
+      {
+        "name": "Brandin Cooks",
+        "position": "WR",
+        "team": "NO",
+        "value": 710,
+        "position_rank": 94,
+        "overall_rank": 205
       },
       {
         "name": "Adam Thielen",
         "position": "WR",
         "team": "CAR",
         "value": 685,
-        "position_rank": 60,
-        "overall_rank": 141
+        "position_rank": 61,
+        "overall_rank": 145
       },
       {
-        "name": "Cooper Kupp",
+        "name": "Tyler Lockett",
         "position": "WR",
-        "team": "SEA",
-        "value": 634,
-        "position_rank": 50,
-        "overall_rank": 121
-      },
-      {
-        "name": "Chris Godwin",
-        "position": "WR",
-        "team": "TB",
-        "value": 579,
-        "position_rank": 36,
-        "overall_rank": 97
-      },
-      {
-        "name": "Alvin Kamara",
-        "position": "RB",
-        "team": "NO",
-        "value": 573,
-        "position_rank": 19,
-        "overall_rank": 62
+        "team": "TEN",
+        "value": 661,
+        "position_rank": 98,
+        "overall_rank": 210
       }
     ]
   },

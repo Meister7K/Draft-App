@@ -96,7 +96,7 @@ export function RecommendationCard({
 
   return (
     <div 
-      className={`card ${actionStyling.bgColor} ${actionStyling.borderColor} border-2 transition-all duration-200 hover:shadow-lg ${isMobile ? 'touch-manipulation' : ''} p-3 sm:p-4`}
+      className={`card ${actionStyling.bgColor} ${actionStyling.borderColor} border-2 transition-shadow duration-200 hover:shadow-lg ${isMobile ? 'touch-manipulation' : ''} p-3 sm:p-4`}
       role="article"
       aria-labelledby={`player-${playerInfo.player_id}-name`}
       aria-describedby={`player-${playerInfo.player_id}-recommendation`}

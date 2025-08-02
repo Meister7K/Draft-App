@@ -58,11 +58,11 @@ export function calculateOptimizationScore(player, context) {
 
   // Optimized scoring weights for better recommendations
   const weights = {
-    rosterNeed: 0.2, // Reduced slightly to avoid over-prioritizing need
-    playerValue: 0.35, // Increased to emphasize player quality
-    competition: 0.15, // Reduced as it's less predictable
-    availability: 0.2, // Increased to emphasize urgency
-    startingLineupImpact: 0.1, // Kept same as it's already calculated in other factors
+    rosterNeed: 0.3, // Increased to better prioritize actual roster gaps
+    playerValue: 0.35, // Kept same to emphasize player quality
+    competition: 0.1, // Reduced further as it's less predictable
+    availability: 0.2, // Kept same to emphasize urgency
+    startingLineupImpact: 0.05, // Reduced slightly to balance the increased rosterNeed
   };
 
   // Calculate weighted score
@@ -70,7 +70,8 @@ export function calculateOptimizationScore(player, context) {
     return total + factors[factorKey].score * weights[factorKey];
   }, 0);
 
-  const finalScore = Math.round(weightedScore * 10) / 10;
+  // Use more precise scoring to avoid identical scores for different players
+  const finalScore = Math.round(weightedScore * 100) / 100;
 
   return {
     score: finalScore,
@@ -257,13 +258,13 @@ export function calculatePlayerValueScore(player, context) {
 
     // Debug logging for key players
     if (process.env.NODE_ENV === "development" && isKeyPlayer) {
-      console.log(`Player value calculation for ${playerName}:`, {
-        compositeValue,
-        normalizedScore,
-        projectedPoints: player.player_info?.projected_2025_points,
-        overallRank: player.player_info?.overall_rank,
-        positionRank: player.player_info?.position_rank,
-      });
+      // console.log(`Player value calculation for ${playerName}:`, {
+      //   compositeValue,
+      //   normalizedScore,
+      //   projectedPoints: player.player_info?.projected_2025_points,
+      //   overallRank: player.player_info?.overall_rank,
+      //   positionRank: player.player_info?.position_rank,
+      // });
     }
 
     const overallRank = player.player_info.overall_rank || 999;
@@ -274,50 +275,41 @@ export function calculatePlayerValueScore(player, context) {
     let finalScore = normalizedScore;
     const position = player.player_info.position;
 
-    // Enhanced scoring that prioritizes projected points as the primary factor
-    // For QBs, use a scale that makes sense for their typical point ranges (200-400)
-    const qbPointsScale = position === "QB" ? 400 : 350;
+    // Create a more granular scoring system that better differentiates players
+    // Combine projected points, rank, and composite value for more precise scoring
+    const projectedPointsWeight = 0.5;
+    const rankWeightNew = 0.3;
+    const compositeWeight = 0.2;
+
+    // More granular projected points scoring
+    const maxProjectedPoints = position === "QB" ? 400 : 350;
     const projectedPointsScore = Math.min(
       100,
-      (projectedPoints / qbPointsScale) * 100
+      (projectedPoints / maxProjectedPoints) * 100
     );
-    const rankScore = Math.max(0, 100 - (overallRank - 1) / 2.5);
 
-    // Projected points should be the dominant factor, especially for QBs
-    const pointsWeight = position === "QB" ? 0.85 : 0.7;
-    const rankWeight = 1 - pointsWeight;
+    // More granular rank scoring (better differentiation for similar ranks)
+    const rankScore = Math.max(0, 100 - (overallRank - 1) / 3); // More sensitive to rank differences
 
-    const projectedPointsBasedScore =
-      projectedPointsScore * pointsWeight + rankScore * rankWeight;
+    // Combine all factors with weights for more precise differentiation
+    finalScore =
+      projectedPointsScore * projectedPointsWeight +
+      rankScore * rankWeightNew +
+      normalizedScore * compositeWeight;
 
-    // Always prioritize projected points over composite value for player evaluation
-    // Only use composite value if projected points are missing or very low
-    if (projectedPoints >= 340) {
-      // Very high projection players (like Jayden Daniels)
-      finalScore = Math.max(95, projectedPointsBasedScore);
-    } else if (projectedPoints >= 320) {
-      // High projection players
-      finalScore = Math.max(90, projectedPointsBasedScore);
-    } else if (projectedPoints >= 300) {
-      // Good projection players (like Baker Mayfield)
-      finalScore = Math.max(75, Math.min(85, projectedPointsBasedScore));
-    } else if (projectedPoints >= 250) {
-      // Decent projection players
-      finalScore = Math.max(normalizedScore, projectedPointsBasedScore);
-    } else if (projectedPoints >= 200) {
-      // Lower projection players
-      finalScore = Math.max(normalizedScore * 0.9, projectedPointsBasedScore);
-    } else {
-      // Very low projections - rely more on composite value
-      finalScore = normalizedScore;
+    // Apply position-specific adjustments without hard caps that cause convergence
+    if (position === "QB") {
+      // QBs: Emphasize projected points more heavily
+      finalScore =
+        projectedPointsScore * 0.7 + rankScore * 0.2 + normalizedScore * 0.1;
+    } else if (position === "TE") {
+      // TEs: Balance projected points and scarcity
+      finalScore =
+        projectedPointsScore * 0.6 + rankScore * 0.25 + normalizedScore * 0.15;
     }
 
-    // Cap scores to prevent inflation
-    if (position === "QB" && projectedPoints < 320 && finalScore > 85) {
-      finalScore = Math.min(85, finalScore);
-    } else if (position === "TE" && finalScore > 85) {
-      finalScore = Math.max(75, finalScore * 0.95);
-    }
+    // Apply reasonable bounds without hard caps that cause score convergence
+    finalScore = Math.max(0, Math.min(100, finalScore));
 
     let explanation = `Composite value: ${compositeValue.toFixed(1)}`;
 
@@ -332,7 +324,7 @@ export function calculatePlayerValueScore(player, context) {
     }
 
     return {
-      score: Math.round(finalScore * 10) / 10,
+      score: Math.round(finalScore * 100) / 100,
       explanation,
     };
   } catch (error) {
@@ -401,13 +393,13 @@ export function calculateAvailabilityScore(player, context) {
       playerName.includes("LaPorta"));
 
   if (process.env.NODE_ENV === "development" && isKeyPlayer) {
-    console.log(`Availability calculation for ${playerName}:`, {
-      currentPickNumber,
-      picksUntilNext,
-      hasLeagueAnalysis: !!context.leagueAnalysis,
-      hasTargetingPrediction: !!context.targetingPrediction,
-      hasDraftOrder: !!context.draftOrder,
-    });
+    // console.log(`Availability calculation for ${playerName}:`, {
+    //   currentPickNumber,
+    //   picksUntilNext,
+    //   hasLeagueAnalysis: !!context.leagueAnalysis,
+    //   hasTargetingPrediction: !!context.targetingPrediction,
+    //   hasDraftOrder: !!context.draftOrder,
+    // });
   }
 
   // Try to use enhanced availability prediction if context has required data
@@ -439,11 +431,14 @@ export function calculateAvailabilityScore(player, context) {
         typeof availability.availabilityPercentage === "number" &&
         !isNaN(availability.availabilityPercentage)
       ) {
-        const score = availability.availabilityPercentage;
+        // CRITICAL FIX: Invert availability logic for draft urgency
+        // Low availability (likely to be drafted soon) = HIGH urgency score
+        // High availability (likely to be available later) = LOW urgency score
+        const urgencyScore = 100 - availability.availabilityPercentage;
 
         return {
-          score: Math.round(score * 10) / 10,
-          explanation: availability.explanation,
+          score: Math.round(urgencyScore * 100) / 100,
+          explanation: `Urgency: ${availability.explanation}`,
           riskLevel: availability.riskLevel,
           estimatedPickRange: availability.estimatedPickRange,
         };
@@ -509,12 +504,12 @@ export function calculateAvailabilityScore(player, context) {
 
   // Debug logging for key players
   if (process.env.NODE_ENV === "development" && isKeyPlayer) {
-    console.log(`Fallback availability for ${playerName}:`, {
-      overallRank,
-      currentPickNumber,
-      score,
-      explanation,
-    });
+    // console.log(`Fallback availability for ${playerName}:`, {
+    //   overallRank,
+    //   currentPickNumber,
+    //   score,
+    //   explanation,
+    // });
   }
 
   return {
@@ -709,24 +704,24 @@ export function generateRankedRecommendations(availablePlayers, context) {
 
   // Debug logging
   if (process.env.NODE_ENV === "development") {
-    console.log("OptimizationEngine Debug:", {
-      inputPlayersCount: availablePlayers.length,
-      scoredPlayersCount: scoredPlayers.length,
-      topScoredPlayers: scoredPlayers
-        .sort((a, b) => b.optimization.score - a.optimization.score)
-        .slice(0, 10)
-        .map((p) => ({
-          name: p.player?.player_info?.name,
-          position: p.player?.player_info?.position,
-          score: p.optimization.score,
-          factors: {
-            rosterNeed: p.optimization.factors.rosterNeed.score,
-            playerValue: p.optimization.factors.playerValue.score,
-            competition: p.optimization.factors.competition.score,
-            availability: p.optimization.factors.availability.score,
-          },
-        })),
-    });
+    // console.log("OptimizationEngine Debug:", {
+    //   inputPlayersCount: availablePlayers.length,
+    //   scoredPlayersCount: scoredPlayers.length,
+    //   topScoredPlayers: scoredPlayers
+    //     .sort((a, b) => b.optimization.score - a.optimization.score)
+    //     .slice(0, 10)
+    //     .map((p) => ({
+    //       name: p.player?.player_info?.name,
+    //       position: p.player?.player_info?.position,
+    //       score: p.optimization.score,
+    //       factors: {
+    //         rosterNeed: p.optimization.factors.rosterNeed.score,
+    //         playerValue: p.optimization.factors.playerValue.score,
+    //         competition: p.optimization.factors.competition.score,
+    //         availability: p.optimization.factors.availability.score,
+    //       },
+    //     })),
+    // });
   }
 
   // Sort by optimization score (descending)
@@ -740,20 +735,20 @@ export function generateRankedRecommendations(availablePlayers, context) {
 
   // Debug logging
   if (process.env.NODE_ENV === "development") {
-    console.log("Filtering Debug:", {
-      rankedPlayersCount: rankedPlayers.length,
-      filteredRecommendationsCount: filteredRecommendations.length,
-      topRankedPlayers: rankedPlayers.slice(0, 10).map((p) => ({
-        name: p.player?.player_info?.name,
-        position: p.player?.player_info?.position,
-        score: p.optimization.score,
-      })),
-      filteredPlayers: filteredRecommendations.map((p) => ({
-        name: p.player?.player_info?.name,
-        position: p.player?.player_info?.position,
-        score: p.optimization.score,
-      })),
-    });
+    // console.log("Filtering Debug:", {
+    //   rankedPlayersCount: rankedPlayers.length,
+    //   filteredRecommendationsCount: filteredRecommendations.length,
+    //   topRankedPlayers: rankedPlayers.slice(0, 10).map((p) => ({
+    //     name: p.player?.player_info?.name,
+    //     position: p.player?.player_info?.position,
+    //     score: p.optimization.score,
+    //   })),
+    //   filteredPlayers: filteredRecommendations.map((p) => ({
+    //     name: p.player?.player_info?.name,
+    //     position: p.player?.player_info?.position,
+    //     score: p.optimization.score,
+    //   })),
+    // });
   }
 
   // Add ranking information
@@ -774,8 +769,8 @@ export function rankPlayersByOptimizationScore(scoredPlayers) {
     // Primary sort: optimization score (descending)
     const scoreDiff = b.optimization.score - a.optimization.score;
 
-    if (Math.abs(scoreDiff) < 0.1) {
-      // Tie-breaking logic for players with similar scores (within 0.1 points)
+    if (Math.abs(scoreDiff) < 0.01) {
+      // Tie-breaking logic for players with similar scores (within 0.01 points)
       return applyTieBreakingLogic(a, b);
     }
 
@@ -793,43 +788,48 @@ export function applyTieBreakingLogic(playerA, playerB) {
   const playerInfoA = playerA.player.player_info;
   const playerInfoB = playerB.player.player_info;
 
-  // Tie-breaker 1: Roster need score (higher is better)
-  const rosterNeedDiff =
-    playerB.optimization.factors.rosterNeed.score -
-    playerA.optimization.factors.rosterNeed.score;
-  if (Math.abs(rosterNeedDiff) >= 5) {
-    return rosterNeedDiff;
-  }
-
-  // Tie-breaker 2: Player value score (higher is better)
-  const playerValueDiff =
-    playerB.optimization.factors.playerValue.score -
-    playerA.optimization.factors.playerValue.score;
-  if (Math.abs(playerValueDiff) >= 5) {
-    return playerValueDiff;
-  }
-
-  // Tie-breaker 3: Overall rank (lower rank number is better)
-  const overallRankA = playerInfoA.overall_rank || 999;
-  const overallRankB = playerInfoB.overall_rank || 999;
-  const rankDiff = overallRankA - overallRankB;
-  if (Math.abs(rankDiff) >= 5) {
-    return rankDiff;
-  }
-
-  // Tie-breaker 4: Projected points (higher is better)
+  // Tie-breaker 1: Projected points (higher is better) - most important differentiator
   const projectedPointsA = playerInfoA.projected_2025_points || 0;
   const projectedPointsB = playerInfoB.projected_2025_points || 0;
   const pointsDiff = projectedPointsB - projectedPointsA;
-  if (Math.abs(pointsDiff) >= 5) {
+  if (Math.abs(pointsDiff) >= 1) {
+    // More sensitive to projected points differences
     return pointsDiff;
+  }
+
+  // Tie-breaker 2: Overall rank (lower rank number is better)
+  const overallRankA = playerInfoA.overall_rank || 999;
+  const overallRankB = playerInfoB.overall_rank || 999;
+  const rankDiff = overallRankA - overallRankB;
+  if (Math.abs(rankDiff) >= 1) {
+    // More sensitive to rank differences
+    return rankDiff;
+  }
+
+  // Tie-breaker 3: Player value score (higher is better)
+  const playerValueDiff =
+    playerB.optimization.factors.playerValue.score -
+    playerA.optimization.factors.playerValue.score;
+  if (Math.abs(playerValueDiff) >= 1) {
+    // More sensitive to value differences
+    return playerValueDiff;
+  }
+
+  // Tie-breaker 4: Roster need score (higher is better)
+  const rosterNeedDiff =
+    playerB.optimization.factors.rosterNeed.score -
+    playerA.optimization.factors.rosterNeed.score;
+  if (Math.abs(rosterNeedDiff) >= 1) {
+    // More sensitive to need differences
+    return rosterNeedDiff;
   }
 
   // Tie-breaker 5: Position rank (lower is better)
   const positionRankA = playerInfoA.position_rank || 999;
   const positionRankB = playerInfoB.position_rank || 999;
   const posRankDiff = positionRankA - positionRankB;
-  if (Math.abs(posRankDiff) >= 2) {
+  if (Math.abs(posRankDiff) >= 1) {
+    // More sensitive to position rank differences
     return posRankDiff;
   }
 
@@ -878,13 +878,13 @@ export function filterTopRecommendationsWithDiversity(
           playerName.includes("Saquon") ||
           playerName.includes("McCaffrey"))
       ) {
-        console.log(`Diversity filtering ${playerName} (${position}):`, {
-          currentPositionCount,
-          maxPerPosition,
-          recommendationsLength: recommendations.length,
-          willAdd,
-          score: player.optimization.score,
-        });
+        // console.log(`Diversity filtering ${playerName} (${position}):`, {
+        //   currentPositionCount,
+        //   maxPerPosition,
+        //   recommendationsLength: recommendations.length,
+        //   willAdd,
+        //   score: player.optimization.score,
+        // });
       }
     }
 
