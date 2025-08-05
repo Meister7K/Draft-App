@@ -287,49 +287,49 @@ export default function Home() {
           <p className="text-[var(--foreground)] opacity-80 mb-4">
             View your fantasy football draft picks and analysis
           </p>
-          
+
           {/* Analysis Tools Links */}
           <div className="flex justify-center gap-4 mb-4">
-            <a 
-              href="/perfect-draft"
+            <a
+              href="/draft-tool"
               className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              <svg 
-                className="w-5 h-5 mr-2" 
-                fill="none" 
-                stroke="currentColor" 
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M13 10V3L4 14h7v7l9-11h-7z" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
                 />
               </svg>
-              Perfect Draft Analyzer
+              Draft Analyzer Tool
             </a>
-            <a 
+            <a
               href="/actual"
               className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              <svg 
-                className="w-5 h-5 mr-2" 
-                fill="none" 
-                stroke="currentColor" 
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                 />
               </svg>
               Actual Draft Analysis
             </a>
           </div>
-          
+
           <p className="text-sm text-[var(--foreground)] opacity-60">
             Advanced draft projections and real draft pick analysis
           </p>
@@ -357,7 +357,7 @@ export default function Home() {
             <div className="card">
               <UserForm onSubmit={handleUserSubmit} />
             </div>
-            
+
             {/* Analysis Tools Info Card */}
             <div className="card bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border-indigo-200 dark:border-indigo-700">
               <div className="text-center">
@@ -365,17 +365,18 @@ export default function Home() {
                   🎯 Draft Analysis Tools
                 </h3>
                 <p className="text-[var(--foreground)] opacity-70 text-sm mb-4">
-                  Get advanced draft projections with Perfect Draft Analyzer, or analyze real draft picks 
-                  with Actual Draft Analysis. Enter your Sleeper username above to get started.
+                  Get advanced draft projections with Perfect Draft Analyzer, or
+                  analyze real draft picks with Actual Draft Analysis. Enter
+                  your Sleeper username above to get started.
                 </p>
                 <div className="flex justify-center gap-3">
-                  <a 
-                    href="/perfect-draft"
+                  <a
+                    href="/draft-tool"
                     className="inline-flex items-center px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:bg-[var(--primary)]/90 transition-colors duration-200 font-medium text-sm"
                   >
                     Perfect Draft
                   </a>
-                  <a 
+                  <a
                     href="/actual"
                     className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium text-sm"
                   >
@@ -411,25 +412,26 @@ export default function Home() {
                       🚀 Ready for Advanced Analysis?
                     </h3>
                     <p className="text-[var(--foreground)] opacity-70 text-sm">
-                      Use our Perfect Draft Analyzer for {selectedLeague.name} to get ideal draft projections, 
-                      real-time pick analysis, and competitive insights.
+                      Use our Perfect Draft Analyzer for {selectedLeague.name}{" "}
+                      to get ideal draft projections, real-time pick analysis,
+                      and competitive insights.
                     </p>
                   </div>
-                  <a 
-                    href="/perfect-draft"
+                  <a
+                    href="/draft-tool"
                     className="ml-4 inline-flex items-center px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:bg-[var(--primary)]/90 transition-colors duration-200 font-medium whitespace-nowrap"
                   >
-                    <svg 
-                      className="w-4 h-4 mr-2" 
-                      fill="none" 
-                      stroke="currentColor" 
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        strokeWidth={2} 
-                        d="M13 10V3L4 14h7v7l9-11h-7z" 
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
                       />
                     </svg>
                     Analyze Draft
