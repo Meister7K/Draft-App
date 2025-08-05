@@ -335,29 +335,52 @@ export class ManagerHistoricalDataService {
       const allPicks = [];
       const allLeagues = [];
       const seasonsWithData = [];
-      console.log('[sleeperApi] getManagerDraftHistory called for userId:', userId, 'seasons:', seasons);
-      console.log('[sleeperApi] userId type:', typeof userId, 'userId value:', userId);
+      console.log(
+        "[sleeperApi] getManagerDraftHistory called for userId:",
+        userId,
+        "seasons:",
+        seasons
+      );
+      console.log(
+        "[sleeperApi] userId type:",
+        typeof userId,
+        "userId value:",
+        userId
+      );
       // Get data for each season
       for (const season of seasons) {
         try {
-          console.log(`[sleeperApi] Fetching leagues for userId ${userId} season ${season}`);
+          console.log(
+            `[sleeperApi] Fetching leagues for userId ${userId} season ${season}`
+          );
           const leagues = await this.apiClient.getUserLeagues(userId, season);
-          console.log(`[sleeperApi] Season ${season} leagues:`, leagues?.length);
+          console.log(
+            `[sleeperApi] Season ${season} leagues:`,
+            leagues?.length
+          );
           if (leagues?.length === 0) {
-            console.log(`[sleeperApi] No leagues found for userId ${userId} in season ${season}`);
+            console.log(
+              `[sleeperApi] No leagues found for userId ${userId} in season ${season}`
+            );
           }
           for (const league of leagues) {
             // Get drafts for this league
             const drafts = await this.apiClient.getLeagueDrafts(
               league.league_id
             );
-            console.log(`[sleeperApi] League ${league.league_id} drafts:`, drafts?.length);
+            console.log(
+              `[sleeperApi] League ${league.league_id} drafts:`,
+              drafts?.length
+            );
             for (const draft of drafts) {
               if (draft.status === "complete") {
                 const picks = await this.apiClient.getDraftPicks(
                   draft.draft_id
                 );
-                console.log(`[sleeperApi] Draft ${draft.draft_id} picks:`, picks?.length);
+                console.log(
+                  `[sleeperApi] Draft ${draft.draft_id} picks:`,
+                  picks?.length
+                );
                 // Filter picks for this specific user
                 const userPicks = picks
                   .filter((pick) => pick.picked_by === userId)
@@ -370,7 +393,10 @@ export class ManagerHistoricalDataService {
                     draft_type: draft.type,
                   }));
                 if (userPicks.length > 0) {
-                  console.log(`[sleeperApi] User picks for draft ${draft.draft_id}:`, userPicks.length);
+                  console.log(
+                    `[sleeperApi] User picks for draft ${draft.draft_id}:`,
+                    userPicks.length
+                  );
                 }
                 allPicks.push(...userPicks);
               }
@@ -391,10 +417,10 @@ export class ManagerHistoricalDataService {
           );
         }
       }
-      console.log('[sleeperApi] getManagerDraftHistory result:', {
+      console.log("[sleeperApi] getManagerDraftHistory result:", {
         totalPicks: allPicks.length,
         totalLeagues: allLeagues.length,
-        seasonsWithData
+        seasonsWithData,
       });
       return {
         managerId: userId,
@@ -408,7 +434,7 @@ export class ManagerHistoricalDataService {
         },
       };
     } catch (error) {
-      console.error('[sleeperApi] Failed to get manager draft history:', error);
+      console.error("[sleeperApi] Failed to get manager draft history:", error);
       throw new Error(`Failed to get manager draft history: ${error.message}`);
     }
   }
@@ -421,13 +447,21 @@ export class ManagerHistoricalDataService {
     seasons = ["2024", "2023", "2022", "2021", "2020", "2019", "2018"]
   ) {
     try {
-      console.log('[sleeperApi] getEnhancedManagerData called for userId:', userId, 'seasons:', seasons);
+      console.log(
+        "[sleeperApi] getEnhancedManagerData called for userId:",
+        userId,
+        "seasons:",
+        seasons
+      );
       // Get basic draft history
       const draftHistory = await this.getManagerDraftHistory(userId, seasons);
-      console.log('[sleeperApi] draftHistory:', draftHistory);
+      console.log("[sleeperApi] draftHistory:", draftHistory);
       // Get NFL players data for enhanced information
       const nflPlayers = await this.apiClient.getNflPlayers();
-      console.log('[sleeperApi] nflPlayers keys:', nflPlayers ? Object.keys(nflPlayers).length : 0);
+      console.log(
+        "[sleeperApi] nflPlayers keys:",
+        nflPlayers ? Object.keys(nflPlayers).length : 0
+      );
       // Enhance picks with player data
       const enhancedPicks = draftHistory.picks.map((pick) => {
         const playerData = nflPlayers[pick.player_id];
@@ -444,14 +478,14 @@ export class ManagerHistoricalDataService {
             : null,
         };
       });
-      console.log('[sleeperApi] enhancedPicks:', enhancedPicks.length);
+      console.log("[sleeperApi] enhancedPicks:", enhancedPicks.length);
       return {
         ...draftHistory,
         picks: enhancedPicks,
         playerDatabase: nflPlayers,
       };
     } catch (error) {
-      console.error('[sleeperApi] Failed to get enhanced manager data:', error);
+      console.error("[sleeperApi] Failed to get enhanced manager data:", error);
       throw new Error(`Failed to get enhanced manager data: ${error.message}`);
     }
   }

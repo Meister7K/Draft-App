@@ -1244,17 +1244,22 @@ export function useOptimizedTransform(data, transformFn, deps, options = {}) {
   useEffect(() => {
     if (enableWorker && workerScript && typeof Worker !== 'undefined') {
       try {
-        workerRef.current = new Worker(workerScript);
-        workerRef.current.onmessage = (event) => {
-          const { type, result, error } = event.data;
-          if (type === 'transform-complete') {
-            setResult(result);
-            setIsTransforming(false);
-          } else if (type === 'transform-error') {
-            setError(new Error(error));
-            setIsTransforming(false);
-          }
-        };
+        // Validate workerScript is a valid URL or blob URL
+        if (typeof workerScript === 'string' && (workerScript.startsWith('http') || workerScript.startsWith('blob:') || workerScript.startsWith('/'))) {
+          workerRef.current = new Worker(workerScript);
+          workerRef.current.onmessage = (event) => {
+            const { type, result, error } = event.data;
+            if (type === 'transform-complete') {
+              setResult(result);
+              setIsTransforming(false);
+            } else if (type === 'transform-error') {
+              setError(new Error(error));
+              setIsTransforming(false);
+            }
+          };
+        } else {
+          console.warn('Invalid worker script URL:', workerScript);
+        }
       } catch (err) {
         console.warn('Failed to initialize web worker:', err);
       }
