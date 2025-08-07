@@ -10,11 +10,17 @@ import { useDataContext } from "../DataContext";
 
 export default function ResponsiveTestPage() {
   // Use DataContext for responsive data
-  const { leagueData, draftData, leagueUsers, setDraftData, refreshFromStorage } = useDataContext();
-  
+  const {
+    leagueData,
+    draftData,
+    leagueUsers,
+    setDraftData,
+    refreshFromStorage,
+  } = useDataContext();
+
   // State for raw player data from API
   const [playerData, setPlayerData] = useState(null);
-  
+
   // A single, reliable loading state for all initial data
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -215,49 +221,59 @@ export default function ResponsiveTestPage() {
     });
 
     const calculatePlayerRosterVorp = (testPlayer, roster, baselines) => {
-        let tempFpts = testPlayer.fpts;
-        
-        // Devalue positions based on roster limits
-        if (testPlayer.pos === 'TE') {
-            const teCount = roster.filter(p => p.pos === 'TE').length;
-            if (teCount >= (starterCounts.TE || 0)) {
-                tempFpts *= 0.7; // Devalue subsequent TEs
-            }
-        } else if (testPlayer.pos === 'QB') {
-            const qbCount = roster.filter(p => p.pos === 'QB').length;
-            if (qbCount >= 4) { // Max 4 QBs rule
-                return -1; // No value, actively bad pick
-            }
+      let tempFpts = testPlayer.fpts;
+
+      // Devalue positions based on roster limits
+      if (testPlayer.pos === "TE") {
+        const teCount = roster.filter((p) => p.pos === "TE").length;
+        if (teCount >= (starterCounts.TE || 0)) {
+          tempFpts *= 0.7; // Devalue subsequent TEs
+        }
+      } else if (testPlayer.pos === "QB") {
+        const qbCount = roster.filter((p) => p.pos === "QB").length;
+        if (qbCount >= 4) {
+          // Max 4 QBs rule
+          return -1; // No value, actively bad pick
+        }
+      }
+
+      const playersAtPos = roster.filter((p) => p.pos === testPlayer.pos);
+      const numStartersForPos = starterCounts[testPlayer.pos] || 0;
+
+      // Case 1: The player can fill an open dedicated starting spot
+      if (playersAtPos.length < numStartersForPos) {
+        const positionalBaseline = baselines[testPlayer.pos] || 0;
+        return tempFpts - positionalBaseline;
+      }
+
+      // Case 2: The player is FLEX-eligible and could upgrade a FLEX spot or bench
+      if (["RB", "WR", "TE"].includes(testPlayer.pos)) {
+        const rosteredFlexEligible = roster.filter((p) =>
+          ["RB", "WR", "TE"].includes(p.pos)
+        );
+        const totalFlexEligibleStarters =
+          (starterCounts.RB || 0) +
+          (starterCounts.WR || 0) +
+          (starterCounts.TE || 0) +
+          (starterCounts.FLEX || 0);
+
+        if (rosteredFlexEligible.length < totalFlexEligibleStarters) {
+          return tempFpts - baselines.FLEX;
         }
 
-        const playersAtPos = roster.filter(p => p.pos === testPlayer.pos);
-        const numStartersForPos = starterCounts[testPlayer.pos] || 0;
+        const sortedRosteredFlexPlayers = rosteredFlexEligible.sort(
+          (a, b) => b.fpts - a.fpts
+        );
+        const worstStarter =
+          sortedRosteredFlexPlayers[totalFlexEligibleStarters - 1];
 
-        // Case 1: The player can fill an open dedicated starting spot
-        if (playersAtPos.length < numStartersForPos) {
-            const positionalBaseline = baselines[testPlayer.pos] || 0;
-            return tempFpts - positionalBaseline;
+        if (worstStarter) {
+          return tempFpts - worstStarter.fpts;
         }
+      }
 
-        // Case 2: The player is FLEX-eligible and could upgrade a FLEX spot or bench
-        if (['RB', 'WR', 'TE'].includes(testPlayer.pos)) {
-            const rosteredFlexEligible = roster.filter(p => ['RB', 'WR', 'TE'].includes(p.pos));
-            const totalFlexEligibleStarters = (starterCounts.RB || 0) + (starterCounts.WR || 0) + (starterCounts.TE || 0) + (starterCounts.FLEX || 0);
-
-            if (rosteredFlexEligible.length < totalFlexEligibleStarters) {
-                return tempFpts - baselines.FLEX;
-            }
-
-            const sortedRosteredFlexPlayers = rosteredFlexEligible.sort((a, b) => b.fpts - a.fpts);
-            const worstStarter = sortedRosteredFlexPlayers[totalFlexEligibleStarters - 1];
-            
-            if (worstStarter) {
-                return tempFpts - worstStarter.fpts;
-            }
-        }
-        
-        // Case 3: Player is not FLEX-eligible (e.g., QB) and dedicated spots are full
-        return 0;
+      // Case 3: Player is not FLEX-eligible (e.g., QB) and dedicated spots are full
+      return 0;
     };
 
     return initialPicks.map((pick) => {
@@ -273,20 +289,24 @@ export default function ResponsiveTestPage() {
 
       const managerId = pick.picked_by;
       const currentRoster = managerRosters.get(managerId) || [];
-      
+
       const availableWithRosterVorp = availablePlayersNow.map(
         (availablePlayer) => ({
           ...availablePlayer,
-          rosterVorp: calculatePlayerRosterVorp(availablePlayer, currentRoster, baselines),
+          rosterVorp: calculatePlayerRosterVorp(
+            availablePlayer,
+            currentRoster,
+            baselines
+          ),
         })
       );
 
       const bestAvailablePick = availableWithRosterVorp.reduce(
         (best, current) =>
-          (current.rosterVorp > best.rosterVorp) ? current : best,
+          current.rosterVorp > best.rosterVorp ? current : best,
         { rosterVorp: -Infinity }
       );
-      
+
       let historicalVorp = 0;
       let historicalVorpAll = 0;
       let rosterVorp = 0;
@@ -298,7 +318,11 @@ export default function ResponsiveTestPage() {
         }
         historicalVorp = player.fpts - pBaseline;
         historicalVorpAll = player.fpts - (baselines["GLOBAL"] || 0);
-        rosterVorp = calculatePlayerRosterVorp(player, currentRoster, baselines);
+        rosterVorp = calculatePlayerRosterVorp(
+          player,
+          currentRoster,
+          baselines
+        );
       }
 
       if (player) {
@@ -314,71 +338,93 @@ export default function ResponsiveTestPage() {
         historicalVorpAll,
         rosterVorp,
         bestAvailablePick,
-        isOptimalPick: player && bestAvailablePick && Math.abs(rosterVorp - bestAvailablePick.rosterVorp) < 0.01,
+        isOptimalPick:
+          player &&
+          bestAvailablePick &&
+          Math.abs(rosterVorp - bestAvailablePick.rosterVorp) < 0.01,
       };
     });
   }, [newPlayerData, initialPicks, rosterSetup, managers]);
 
   const perfectDraft = useMemo(() => {
-    if (!newPlayerData.length || !managers.length || !rosterSetup.length || !analyzedPicks.length) return [];
+    if (
+      !newPlayerData.length ||
+      !managers.length ||
+      !rosterSetup.length ||
+      !analyzedPicks.length
+    )
+      return [];
 
-    const playerMap = new Map(newPlayerData.map(p => [p.id, p]));
-    let availablePlayerIds = new Set(newPlayerData.map(p => p.id));
-    const managerRosters = new Map(managers.map(m => [m.user_id, []]));
-    
+    const playerMap = new Map(newPlayerData.map((p) => [p.id, p]));
+    let availablePlayerIds = new Set(newPlayerData.map((p) => p.id));
+    const managerRosters = new Map(managers.map((m) => [m.user_id, []]));
+
     const starterCounts = {};
-    rosterSetup.forEach(pos => {
-      if (pos !== 'BN') {
+    rosterSetup.forEach((pos) => {
+      if (pos !== "BN") {
         starterCounts[pos] = (starterCounts[pos] || 0) + 1;
       }
     });
 
     const sortedManagers = [...managers].sort((a, b) => {
-      const aFirstPick = initialPicks.find(p => p.picked_by === a.user_id)?.pick_no || Infinity;
-      const bFirstPick = initialPicks.find(p => p.picked_by === b.user_id)?.pick_no || Infinity;
+      const aFirstPick =
+        initialPicks.find((p) => p.picked_by === a.user_id)?.pick_no ||
+        Infinity;
+      const bFirstPick =
+        initialPicks.find((p) => p.picked_by === b.user_id)?.pick_no ||
+        Infinity;
       return aFirstPick - bFirstPick;
     });
 
     const calculatePlayerRosterVorp = (testPlayer, roster, baselines) => {
-        let tempFpts = testPlayer.fpts;
-        
-        if (testPlayer.pos === 'TE') {
-            const teCount = roster.filter(p => p.pos === 'TE').length;
-            if (teCount >= (starterCounts.TE || 0)) {
-                tempFpts *= 0.7;
-            }
-        } else if (testPlayer.pos === 'QB') {
-            const qbCount = roster.filter(p => p.pos === 'QB').length;
-            if (qbCount >= 4) {
-                return -999; // Heavily penalize picking a 5th QB
-            }
+      let tempFpts = testPlayer.fpts;
+
+      if (testPlayer.pos === "TE") {
+        const teCount = roster.filter((p) => p.pos === "TE").length;
+        if (teCount >= (starterCounts.TE || 0)) {
+          tempFpts *= 0.7;
+        }
+      } else if (testPlayer.pos === "QB") {
+        const qbCount = roster.filter((p) => p.pos === "QB").length;
+        if (qbCount >= 4) {
+          return -999; // Heavily penalize picking a 5th QB
+        }
+      }
+
+      const playersAtPos = roster.filter((p) => p.pos === testPlayer.pos);
+      const numStartersForPos = starterCounts[testPlayer.pos] || 0;
+
+      if (playersAtPos.length < numStartersForPos) {
+        const positionalBaseline = baselines[testPlayer.pos] || 0;
+        return tempFpts - positionalBaseline;
+      }
+
+      if (["RB", "WR", "TE"].includes(testPlayer.pos)) {
+        const rosteredFlexEligible = roster.filter((p) =>
+          ["RB", "WR", "TE"].includes(p.pos)
+        );
+        const totalFlexEligibleStarters =
+          (starterCounts.RB || 0) +
+          (starterCounts.WR || 0) +
+          (starterCounts.TE || 0) +
+          (starterCounts.FLEX || 0);
+
+        if (rosteredFlexEligible.length < totalFlexEligibleStarters) {
+          return tempFpts - baselines.FLEX;
         }
 
-        const playersAtPos = roster.filter(p => p.pos === testPlayer.pos);
-        const numStartersForPos = starterCounts[testPlayer.pos] || 0;
+        const sortedRosteredFlexPlayers = rosteredFlexEligible.sort(
+          (a, b) => b.fpts - a.fpts
+        );
+        const worstStarter =
+          sortedRosteredFlexPlayers[totalFlexEligibleStarters - 1];
 
-        if (playersAtPos.length < numStartersForPos) {
-            const positionalBaseline = baselines[testPlayer.pos] || 0;
-            return tempFpts - positionalBaseline;
+        if (worstStarter) {
+          return tempFpts - worstStarter.fpts;
         }
+      }
 
-        if (['RB', 'WR', 'TE'].includes(testPlayer.pos)) {
-            const rosteredFlexEligible = roster.filter(p => ['RB', 'WR', 'TE'].includes(p.pos));
-            const totalFlexEligibleStarters = (starterCounts.RB || 0) + (starterCounts.WR || 0) + (starterCounts.TE || 0) + (starterCounts.FLEX || 0);
-
-            if (rosteredFlexEligible.length < totalFlexEligibleStarters) {
-                return tempFpts - baselines.FLEX;
-            }
-
-            const sortedRosteredFlexPlayers = rosteredFlexEligible.sort((a, b) => b.fpts - a.fpts);
-            const worstStarter = sortedRosteredFlexPlayers[totalFlexEligibleStarters - 1];
-            
-            if (worstStarter) {
-                return tempFpts - worstStarter.fpts;
-            }
-        }
-        
-        return 0; // Default to 0 for bench players beyond starters
+      return 0; // Default to 0 for bench players beyond starters
     };
 
     const perfectPicks = [];
@@ -386,31 +432,44 @@ export default function ResponsiveTestPage() {
 
     for (let pickNum = 1; pickNum <= totalPicksCount; pickNum++) {
       const round = Math.ceil(pickNum / managers.length);
-      const pickInRound = ((pickNum - 1) % managers.length);
+      const pickInRound = (pickNum - 1) % managers.length;
       const isOddRound = round % 2 === 1;
-      const managerIndex = isOddRound ? pickInRound : managers.length - 1 - pickInRound;
+      const managerIndex = isOddRound
+        ? pickInRound
+        : managers.length - 1 - pickInRound;
       const pickingManager = sortedManagers[managerIndex];
 
       if (!pickingManager) continue;
 
       const availablePlayersNow = [...availablePlayerIds]
-        .map(id => playerMap.get(id))
+        .map((id) => playerMap.get(id))
         .filter(Boolean);
 
       if (availablePlayersNow.length === 0) break;
 
-      const baselines = calculateBaselines(availablePlayersNow, rosterSetup, managers.length);
-      const currentManagerRoster = managerRosters.get(pickingManager.user_id) || [];
+      const baselines = calculateBaselines(
+        availablePlayersNow,
+        rosterSetup,
+        managers.length
+      );
+      const currentManagerRoster =
+        managerRosters.get(pickingManager.user_id) || [];
 
-      const availableWithRosterVorp = availablePlayersNow.map(player => ({
+      const availableWithRosterVorp = availablePlayersNow.map((player) => ({
         ...player,
-        rosterVorp: calculatePlayerRosterVorp(player, currentManagerRoster, baselines)
+        rosterVorp: calculatePlayerRosterVorp(
+          player,
+          currentManagerRoster,
+          baselines
+        ),
       }));
 
-      const bestPick = availableWithRosterVorp.reduce((best, current) => 
-        (current.rosterVorp > best.rosterVorp) ? current : best, { rosterVorp: -Infinity }
+      const bestPick = availableWithRosterVorp.reduce(
+        (best, current) =>
+          current.rosterVorp > best.rosterVorp ? current : best,
+        { rosterVorp: -Infinity }
       );
-      
+
       if (!bestPick || bestPick.rosterVorp === -Infinity) continue;
 
       // --- CORRECTED LOGIC ---
@@ -421,7 +480,8 @@ export default function ResponsiveTestPage() {
         pBaseline = Math.max(pBaseline, baselines["FLEX"]);
       }
       const historicalVorpForBestPick = bestPick.fpts - pBaseline;
-      const historicalVorpAllForBestPick = bestPick.fpts - (baselines["GLOBAL"] || 0);
+      const historicalVorpAllForBestPick =
+        bestPick.fpts - (baselines["GLOBAL"] || 0);
 
       const perfectPick = {
         pick_no: pickNum,
@@ -433,7 +493,7 @@ export default function ResponsiveTestPage() {
         historicalVorp: historicalVorpForBestPick,
         historicalVorpAll: historicalVorpAllForBestPick,
         rosterVorp: bestPick.rosterVorp,
-        isPerfectPick: true
+        isPerfectPick: true,
       };
       // --- END OF CORRECTION ---
 
@@ -532,12 +592,11 @@ export default function ResponsiveTestPage() {
     return analysisResults;
   }, [newPlayerData, rosterSetup, managers]);
 
-
   const playerMap = useMemo(
     () => new Map(newPlayerData.map((p) => [p.id, p])),
     [newPlayerData]
   );
-  
+
   const { rankedPlayers, baselines } = useVorp(
     newPlayerData,
     currentPicks,
@@ -561,7 +620,7 @@ export default function ResponsiveTestPage() {
 
     if (!pickingManager) return;
 
-    const player = newPlayerData.find(p => p.id === playerId);
+    const player = newPlayerData.find((p) => p.id === playerId);
     if (!player) return;
 
     const newPick = {
@@ -581,13 +640,13 @@ export default function ResponsiveTestPage() {
     // Update local state immediately for responsive UI
     const updatedPicks = [...currentPicks, newPick];
     setCurrentPicks(updatedPicks);
-    
+
     // Update the DataContext with the new pick
     const updatedDraftData = {
       ...draftData,
-      picks: updatedPicks
+      picks: updatedPicks,
     };
-    
+
     // Update the context, which will automatically update localStorage
     setDraftData(updatedDraftData);
   };
@@ -619,8 +678,8 @@ export default function ResponsiveTestPage() {
 
   // --- NEW: Derive the current picker's roster ---
   const managerRosters = useMemo(() => {
-    const rosters = new Map(managers.map(m => [m.user_id, []]));
-    analyzedPicks.forEach(pick => {
+    const rosters = new Map(managers.map((m) => [m.user_id, []]));
+    analyzedPicks.forEach((pick) => {
       if (pick.player) {
         const roster = rosters.get(pick.picked_by) || [];
         roster.push(pick.player);
@@ -630,8 +689,8 @@ export default function ResponsiveTestPage() {
     return rosters;
   }, [analyzedPicks, managers]);
 
-  const currentPickerRoster = currentPicker 
-    ? managerRosters.get(currentPicker.user_id) || [] 
+  const currentPickerRoster = currentPicker
+    ? managerRosters.get(currentPicker.user_id) || []
     : [];
 
   // Manual refresh function
@@ -677,12 +736,12 @@ export default function ResponsiveTestPage() {
     }
   };
 
-
   if (!leagueData || !draftData || !leagueUsers) {
     return (
       <div className="bg-gray-900 min-h-screen flex items-center justify-center">
         <div className="text-white text-xl">
-          Please set up your draft data first. Go to the main page to configure your league and draft.
+          Please set up your draft data first. Go to the main page to configure
+          your league and draft.
         </div>
       </div>
     );
@@ -709,31 +768,50 @@ export default function ResponsiveTestPage() {
 
   return (
     <div className="bg-gray-900 min-h-screen">
-      {/* Sticky Refresh Button */}
-      <div className="fixed top-4 right-4 z-50">
+      {/* Sticky Navigation and Refresh */}
+      <div className="fixed top-4 right-4 z-50 flex gap-2">
+        <a
+          href="/perfect-pick"
+          className="flex items-center space-x-2 px-4 py-2 rounded-lg shadow-lg font-medium text-sm transition-all duration-200 bg-red-600 hover:bg-red-500 text-white hover:shadow-xl"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+            />
+          </svg>
+          <span>Heatmap</span>
+        </a>
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
           className={`flex items-center space-x-2 px-4 py-2 rounded-lg shadow-lg font-medium text-sm transition-all duration-200 ${
             isRefreshing
-              ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
-              : 'bg-cyan-600 hover:bg-cyan-500 text-white hover:shadow-xl'
+              ? "bg-gray-600 text-gray-300 cursor-not-allowed"
+              : "bg-cyan-600 hover:bg-cyan-500 text-white hover:shadow-xl"
           }`}
         >
-          <svg 
-            className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} 
-            fill="none" 
-            stroke="currentColor" 
+          <svg
+            className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
+            fill="none"
+            stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
             />
           </svg>
-          <span>{isRefreshing ? 'Refreshing...' : 'Refresh Data'}</span>
+          <span>{isRefreshing ? "Refreshing..." : "Refresh Data"}</span>
         </button>
       </div>
 
@@ -743,7 +821,9 @@ export default function ResponsiveTestPage() {
           <div className="flex items-center justify-between text-sm text-gray-300">
             <div className="flex items-center space-x-4">
               <span>Draft Status: {currentPicks.length} picks made</span>
-              <span>Last Update: {new Date(lastUpdateTime).toLocaleTimeString()}</span>
+              <span>
+                Last Update: {new Date(lastUpdateTime).toLocaleTimeString()}
+              </span>
               {pollingInterval && updateFrequency && (
                 <span className="text-cyan-400">
                   Auto-updating every {updateFrequency}
@@ -756,22 +836,32 @@ export default function ResponsiveTestPage() {
                 disabled={isRefreshing}
                 className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                   isRefreshing
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                    ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                    : "bg-cyan-600 hover:bg-cyan-500 text-white"
                 }`}
               >
-                {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                {isRefreshing ? "Refreshing..." : "Refresh"}
               </button>
               <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${pollingInterval ? 'bg-green-400 animate-pulse' : 'bg-yellow-400'}`}></div>
-                <span className={pollingInterval ? 'text-green-400' : 'text-yellow-400'}>
-                  {pollingInterval ? 'Live Updates' : 'Manual Updates'}
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    pollingInterval
+                      ? "bg-green-400 animate-pulse"
+                      : "bg-yellow-400"
+                  }`}
+                ></div>
+                <span
+                  className={
+                    pollingInterval ? "text-green-400" : "text-yellow-400"
+                  }
+                >
+                  {pollingInterval ? "Live Updates" : "Manual Updates"}
                 </span>
               </div>
             </div>
           </div>
         </div>
-        
+
         <VorpTable
           rankedPlayers={rankedPlayers}
           baselines={baselines}
