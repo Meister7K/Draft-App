@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import PlayerPointHeatmap from "./PlayerPointHeatmap";
 import ADPDotPlot from "./ADPDotPlot";
 import PerfectPick from "./perfectPick";
+import MonteCarloSimulation from "./MonteCarloSimulation";
 import { useDataContext } from "../DataContext";
 
 export default function PerfectPickPage() {
@@ -295,6 +296,15 @@ export default function PerfectPickPage() {
             </div>
           </div>
         </div>
+
+        {/* Monte Carlo Draft Simulation */}
+        <MonteCarloSimulation
+          playerData={processedPlayerData}
+          currentPicks={currentPicks}
+          leagueData={leagueData}
+          leagueUsers={leagueUsers}
+          draftData={draftData}
+        />
 
         {/* Perfect Pick Recommendations */}
         <PerfectPick

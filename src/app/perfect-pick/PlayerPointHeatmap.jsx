@@ -14,8 +14,8 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
     return new Set(currentPicks.map((pick) => pick.player_id));
   }, [currentPicks]);
 
-  // Filter players by position (always show all players)
-  const filteredPlayers = useMemo(() => {
+  // Filter players by position and calculate tiers based on points ranking
+  const playersWithTiers = useMemo(() => {
     if (!playerData || !Array.isArray(playerData)) return [];
 
     let players;
@@ -29,9 +29,57 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
       players = playerData.filter((player) => player.pos === selectedPosition);
     }
 
-    // Sort by ADP (ascending) or fantasy points (descending)
+    // Always sort by fantasy points first to calculate tiers
+    const pointsSortedPlayers = players.sort((a, b) => b.fpts - a.fpts);
+
+    // Calculate tiers based on points ranking
+    let currentTier = 1;
+    let tierStartPoints = pointsSortedPlayers.length > 0 ? pointsSortedPlayers[0].fpts : 0;
+
+    return pointsSortedPlayers.map((player, index) => {
+      let tier = currentTier;
+      let isNewTier = false;
+      let tierReason = '';
+
+      if (index === 0) {
+        // First player is always tier 1
+        tier = 1;
+        tierStartPoints = player.fpts;
+      } else {
+        const prevPlayer = pointsSortedPlayers[index - 1];
+        const dropFromTierStart = tierStartPoints - player.fpts;
+        const dropFromPrevious = prevPlayer.fpts - player.fpts;
+
+        // New tier if >34 points from tier start OR >17 points from previous player
+        if (dropFromTierStart >= 34) {
+          currentTier++;
+          tier = currentTier;
+          tierStartPoints = player.fpts;
+          isNewTier = true;
+          tierReason = `34+ pts from tier start (${dropFromTierStart.toFixed(1)} pts)`;
+        } else if (dropFromPrevious > 17) {
+          currentTier++;
+          tier = currentTier;
+          tierStartPoints = player.fpts;
+          isNewTier = true;
+          tierReason = `17+ pts from previous (${dropFromPrevious.toFixed(1)} pts)`;
+        }
+      }
+
+      return {
+        ...player,
+        tier,
+        isNewTier,
+        tierReason,
+        pointsRank: index + 1, // Rank based on points
+      };
+    });
+  }, [playerData, selectedPosition]);
+
+  // Apply display sorting while preserving tier information
+  const filteredPlayers = useMemo(() => {
     if (sortByADP) {
-      return players.sort((a, b) => {
+      return [...playersWithTiers].sort((a, b) => {
         // Handle players without ADP (999) by putting them at the end
         if (a.adp === 999 && b.adp === 999) return b.fpts - a.fpts; // Sort by points if both have no ADP
         if (a.adp === 999) return 1; // a goes to end
@@ -39,11 +87,11 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
         return a.adp - b.adp; // Normal ADP sort (ascending)
       });
     } else {
-      return players.sort((a, b) => b.fpts - a.fpts); // Default: sort by fantasy points
+      return playersWithTiers; // Already sorted by points
     }
-  }, [playerData, selectedPosition, sortByADP]);
+  }, [playersWithTiers, sortByADP]);
 
-  // Calculate heatmap data with dropoff analysis
+  // Calculate heatmap data with tier determination
   const heatmapData = useMemo(() => {
     if (!filteredPlayers.length) return [];
 
@@ -58,6 +106,8 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
         ? scalingPlayers[scalingPlayers.length - 1].fpts
         : 0; // Lowest player's points
     const pointRange = maxPoints - minPoints;
+
+    // Tiers are already calculated in playersWithTiers
 
     return filteredPlayers.map((player, index) => {
       // Calculate intensity as percentage of the scaling reference
@@ -85,13 +135,25 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
           ? (topPlayerDropoff / maxPoints) * 100
           : 0;
 
-      // Identify significant dropoffs (>10% or >5 points)
+      // Tier information is already calculated in playersWithTiers
+      // No need to recalculate here
+
+      // Calculate drop to next player for display
+      const nextPlayer = index < filteredPlayers.length - 1 ? filteredPlayers[index + 1] : null;
+      const dropToNext = nextPlayer ? player.fpts - nextPlayer.fpts : 0;
+      
+      // For ADP sorting, also calculate ADP gap to next player
+      const adpGapToNext = nextPlayer && sortByADP && player.adp !== 999 && nextPlayer.adp !== 999
+        ? nextPlayer.adp - player.adp
+        : 0;
+
+      // Identify significant dropoffs (keep existing logic for visual indicators)
       const isSignificantDropoff = dropoffPercentage > 10 || dropoff > 5;
 
       return {
-        ...player,
+        ...player, // This already includes tier, isNewTier, tierReason, pointsRank
         intensity,
-        rank: index + 1,
+        rank: index + 1, // Display rank based on current sort
         isDrafted,
         dropoff,
         dropoffPercentage,
@@ -100,9 +162,11 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
         isSignificantDropoff,
         maxPoints, // Store for reference in tooltips
         minPoints,
+        dropToNext,
+        adpGapToNext,
       };
     });
-  }, [filteredPlayers, draftedPlayerIds, showAvailableOnly]);
+  }, [filteredPlayers, draftedPlayerIds, showAvailableOnly, sortByADP]);
 
   // Get CSS classes for border effects
   const getHeatmapClasses = (isSignificantDropoff) => {
@@ -299,8 +363,12 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
                   <span>Drafted</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-blue-500 rounded ring-2 ring-purple-400"></div>
-                  <span>Large Dropoff</span>
+                  <div className="w-6 h-4 bg-purple-600 rounded text-white text-xs flex items-center justify-center font-bold">T1</div>
+                  <span>Tier (Purple = New Tier)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-4 bg-orange-600 bg-opacity-80 rounded text-white text-xs flex items-center justify-center font-bold">-5</div>
+                  <span>Points Drop to Next</span>
                 </div>
               </div>
             </div>
@@ -324,10 +392,10 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
                   {/* Player Info */}
                   <div className="text-white text-xs">
                     {/* Player Name */}
-                    <div className="font-bold text-sm mb-1 leading-tight">
+                    <div className="font-bold text-sm mb-1 leading-tight"><a target='_blank' href={`/player/${player.id}`}>
                       {player.name.length > 15
                         ? `${player.name.substring(0, 15)}...`
-                        : player.name}
+                        : player.name}</a>
                     </div>
 
                     {/* Team and Position */}
@@ -367,10 +435,19 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
                     </div>
                   )}
 
-                  {/* Large dropoff indicator */}
-                  {player.isSignificantDropoff && !player.isDrafted && (
-                    <div className="absolute bottom-1 right-1 bg-purple-600 text-white text-xs font-bold px-1 py-0.5 rounded">
-                      DROP
+                  {/* Tier indicator */}
+                  {!player.isDrafted && (
+                    <div className={`absolute bottom-1 right-1  text-xs font-bold px-1 py-0.5 rounded ${
+                      player.isNewTier ? 'bg-blue-200 text-black' : 'bg-gray-600 bg-opacity-70 text-white'
+                    }`}>
+                      T{player.tier}
+                    </div>
+                  )}
+
+                  {/* Drop to next player indicator */}
+                  {player.dropToNext > 0 && !player.isDrafted && (
+                    <div className="absolute bottom-1 left-1 bg-orange-600 bg-opacity-80 text-white text-xs font-bold px-1 py-0.5 rounded">
+                      -{player.dropToNext.toFixed(1)}
                     </div>
                   )}
 
@@ -394,10 +471,21 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
                       Rank: #{player.rank} | ADP:{" "}
                       {player.adp === 999 ? "N/A" : player.adp.toFixed(1)}
                     </div>
+                    <div className="text-purple-300 font-medium">
+                      Tier {player.tier}
+                      {player.isNewTier && (
+                        <span className="text-purple-400"> (NEW TIER)</span>
+                      )}
+                    </div>
                     {player.dropoff > 0 && (
                       <div className="text-yellow-400">
                         From prev: -{player.dropoff.toFixed(1)} pts (
                         {player.dropoffPercentage.toFixed(1)}%)
+                      </div>
+                    )}
+                    {player.dropToNext > 0 && (
+                      <div className="text-orange-400">
+                        To next: -{player.dropToNext.toFixed(1)} pts
                       </div>
                     )}
                     {showAvailableOnly && player.topPlayerDropoff > 0 && (
@@ -406,9 +494,9 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
                         {player.topPlayerDropoffPercentage.toFixed(1)}%)
                       </div>
                     )}
-                    {player.isSignificantDropoff && (
-                      <div className="text-purple-400 font-medium">
-                        LARGE DROPOFF
+                    {player.isNewTier && player.tierReason && (
+                      <div className="text-purple-400 font-medium text-xs">
+                        {player.tierReason}
                       </div>
                     )}
                   </div>
@@ -438,7 +526,7 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
           </div>
 
           {/* Stats */}
-          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          <div className="mt-6 grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
             <div className="bg-gray-700 p-3 rounded">
               <div className="text-2xl font-bold text-white">
                 {filteredPlayers.length}
@@ -464,23 +552,28 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
             </div>
             <div className="bg-gray-700 p-3 rounded">
               <div className="text-2xl font-bold text-white">
-                {heatmapData.filter((p) => p.isSignificantDropoff).length}
+                {heatmapData.length > 0 ? Math.max(...heatmapData.map(p => p.tier)) : 0}
               </div>
-              <div className="text-gray-300 text-sm">Large Dropoffs</div>
+              <div className="text-gray-300 text-sm">Total Tiers</div>
+            </div>
+            <div className="bg-gray-700 p-3 rounded">
+              <div className="text-2xl font-bold text-white">
+                {heatmapData.filter((p) => p.isNewTier).length}
+              </div>
+              <div className="text-gray-300 text-sm">Tier Breaks</div>
             </div>
           </div>
 
-          {/* Dropoff Analysis */}
-          {heatmapData.filter((p) => p.isSignificantDropoff && !p.isDrafted)
-            .length > 0 && (
+          {/* Tier Analysis */}
+          {heatmapData.filter((p) => p.isNewTier && !p.isDrafted).length > 0 && (
             <div className="mt-6 bg-gray-700 p-4 rounded-lg">
               <h3 className="text-lg font-bold text-white mb-3">
-                Significant Available Dropoffs
+                Available Tier Breaks
               </h3>
               <div className="space-y-2">
                 {heatmapData
-                  .filter((p) => p.isSignificantDropoff && !p.isDrafted)
-                  .slice(0, 5)
+                  .filter((p) => p.isNewTier && !p.isDrafted)
+                  .slice(0, 8)
                   .map((player) => (
                     <div
                       key={player.id}
@@ -488,24 +581,21 @@ const PlayerPointHeatmap = ({ playerData, currentPicks, updateDraftData }) => {
                     >
                       <div className="text-white">
                         <span className="font-medium">
-                          #{player.rank} {player.name}
+                          Tier {player.tier}: #{player.rank} {player.name}
                         </span>
                         <span className="text-gray-400 ml-2">
-                          ({player.team})
+                          ({player.team}) - {player.fpts.toFixed(1)} pts
                         </span>
                       </div>
                       <div className="text-right">
-                        <div className="text-yellow-400 font-medium">
-                          From prev: -{player.dropoff.toFixed(1)} pts
+                        <div className="text-purple-400 font-medium">
+                          {player.tierReason}
                         </div>
-                        {showAvailableOnly && player.topPlayerDropoff > 0 && (
-                          <div className="text-orange-400 font-medium">
-                            From top: -{player.topPlayerDropoff.toFixed(1)} pts
+                        {player.dropToNext > 0 && (
+                          <div className="text-orange-400 text-xs">
+                            -{player.dropToNext.toFixed(1)} pts to next
                           </div>
                         )}
-                        <div className="text-gray-400 text-xs">
-                          {player.dropoffPercentage.toFixed(1)}% from prev
-                        </div>
                       </div>
                     </div>
                   ))}

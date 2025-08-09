@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 const PerfectPick = ({
   playerData,
@@ -10,6 +10,7 @@ const PerfectPick = ({
   draftData,
   updateDraftData,
 }) => {
+  const [isMinimized, setIsMinimized] = useState(false);
   const managers = leagueUsers;
   const league = leagueData.selectedLeague;
   const rosterSetup = league.roster_positions;
@@ -924,61 +925,41 @@ const PerfectPick = ({
     <div className="bg-gray-800 p-6 rounded-lg">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-white">Draft Overview</h2>
-        <button
-          onClick={updateDraftData}
-          className="inline-flex items-center px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 font-medium text-sm"
-        >
-          <svg
-            className="w-4 h-4 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsMinimized(!isMinimized)}
+            className="inline-flex items-center px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium text-sm"
+            title={isMinimized ? "Expand" : "Minimize"}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-          Refresh
-        </button>
-      </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gray-700 p-3 rounded text-center">
-          <div className="text-2xl font-bold text-white">
-            {rosterSummaries.length}
-          </div>
-          <div className="text-gray-300 text-sm">Total Rosters</div>
-        </div>
-        <div className="bg-gray-700 p-3 rounded text-center">
-          <div className="text-2xl font-bold text-white">
-            {currentPicks.length}
-          </div>
-          <div className="text-gray-300 text-sm">Total Picks</div>
-        </div>
-        <div className="bg-gray-700 p-3 rounded text-center">
-          <div className="text-2xl font-bold text-white">
-            {currentPickNumber}
-          </div>
-          <div className="text-gray-300 text-sm">Current Pick</div>
-        </div>
-        <div className="bg-gray-700 p-3 rounded text-center">
-          <div className="text-2xl font-bold text-white">
-            {Math.ceil(currentPickNumber / numManagers)}
-          </div>
-          <div className="text-gray-300 text-sm">Current Round</div>
-        </div>
-      </div>
-
-      {/* Position Priority Ranking */}
-      {positionPriority.length > 0 && (
-        <div className="bg-gradient-to-r from-cyan-900/50 to-blue-900/50 p-4 rounded-lg mb-6 border border-cyan-500/30">
-          <h3 className="text-lg font-bold text-cyan-300 mb-3 flex items-center">
             <svg
-              className="w-5 h-5 mr-2"
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              {isMinimized ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 15l7-7 7 7"
+                />
+              )}
+            </svg>
+          </button>
+          <button
+            onClick={updateDraftData}
+            className="inline-flex items-center px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 font-medium text-sm"
+          >
+            <svg
+              className="w-4 h-4 mr-2"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -987,417 +968,494 @@ const PerfectPick = ({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            Optimal Draft Strategy (Monte Carlo Simulation)
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {positionPriority.slice(0, 6).map((priority, index) => (
-              <div
-                key={priority.position}
-                className={`p-3 rounded-lg border ${
-                  index === 0
-                    ? "bg-yellow-900/30 border-yellow-500/50"
-                    : index === 1
-                    ? "bg-orange-900/30 border-orange-500/50"
-                    : index === 2
-                    ? "bg-red-900/30 border-red-500/50"
-                    : "bg-gray-800/50 border-gray-600/50"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center">
-                    <span
-                      className={`text-lg font-bold mr-2 ${
-                        index === 0
-                          ? "text-yellow-400"
-                          : index === 1
-                          ? "text-orange-400"
-                          : index === 2
-                          ? "text-red-400"
-                          : "text-gray-300"
-                      }`}
-                    >
-                      #{index + 1}
-                    </span>
-                    <span
-                      className={`font-bold ${
-                        priority.position === "QB"
-                          ? "text-red-400"
-                          : priority.position === "RB"
-                          ? "text-green-400"
-                          : priority.position === "WR"
-                          ? "text-blue-400"
-                          : priority.position === "TE"
-                          ? "text-orange-400"
-                          : priority.position === "FLEX"
-                          ? "text-purple-400"
-                          : "text-gray-300"
-                      }`}
-                    >
-                      {priority.position}
-                    </span>
-                  </div>
-                  <div
-                    className={`text-lg font-bold ${
-                      index === 0
-                        ? "text-yellow-400"
-                        : index === 1
-                        ? "text-orange-400"
-                        : index === 2
-                        ? "text-red-400"
-                        : "text-gray-300"
-                    }`}
-                  >
-                    +{(priority.expectedValue || 0).toFixed(1)}
-                  </div>
-                </div>
-                <div className="text-xs space-y-1">
-                  <div className="flex justify-between text-green-300">
-                    <span>Best Now:</span>
-                    <span>
-                      {priority.bestPlayer.name} (
-                      {(priority.bestPoints || 0).toFixed(1)})
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-blue-300">
-                    <span>Expected Next:</span>
-                    <span>{(priority.expectedPoints || 0).toFixed(1)} pts</span>
-                  </div>
-                  <div className="flex justify-between text-red-300">
-                    <span>Worst Case:</span>
-                    <span>
-                      {priority.worstCasePlayer.name} (
-                      {(priority.worstCasePoints || 0).toFixed(1)})
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-gray-400">
-                    <span>Simulations:</span>
-                    <span>
-                      {priority.simulations} ({priority.confidence})
-                    </span>
-                  </div>
-                  {priority.debug && (
-                    <div className="flex justify-between text-yellow-400 text-xs">
-                      <span>Debug:</span>
-                      <span>
-                        {priority.debug.picksUntilNextTurn || 0} picks,{" "}
-                        {priority.debug.totalAvailableForPosition || 0} avail
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 text-xs text-cyan-200">
-            🧠 Monte Carlo simulation considers all possible draft outcomes
-            between now and your next pick. Higher expected value = better
-            choice to draft now vs. waiting!
-          </div>
-        </div>
-      )}
-
-      {/* Position Summary */}
-      <div className="bg-gray-700 p-4 rounded-lg mb-6">
-        <h3 className="text-lg font-bold text-white mb-3">
-          Position Summary (Drafted / Total Needed)
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Object.entries(positionSummary).map(([position, counts]) => {
-            // Find the on-the-clock manager for worst case calculation
-            const onClockManager = rosterSummaries.find(
-              (summary) => summary.isOnClock
-            );
-            const worstCasePlayer = onClockManager
-              ? getWorstCasePlayer(position, onClockManager.picksUntilNextTurn)
-              : null;
-
-            return (
-              <div key={position} className="bg-gray-600 p-3 rounded-lg">
-                {/* Position Header */}
-                <div className="text-center mb-3">
-                  <div
-                    className={`text-lg font-bold ${
-                      position === "QB"
-                        ? "text-red-400"
-                        : position === "RB"
-                        ? "text-green-400"
-                        : position === "WR"
-                        ? "text-blue-400"
-                        : position === "TE"
-                        ? "text-orange-400"
-                        : position === "K"
-                        ? "text-yellow-400"
-                        : position === "DEF"
-                        ? "text-indigo-400"
-                        : "text-gray-300"
-                    }`}
-                  >
-                    {counts.drafted} / {counts.total}
-                  </div>
-                  <div className="text-gray-300 text-sm font-medium">
-                    {position}
-                  </div>
-                  {counts.total > 0 && (
-                    <div className="text-xs text-gray-400">
-                      {Math.round((counts.drafted / counts.total) * 100)}%
-                      filled
-                    </div>
-                  )}
-                </div>
-
-                {/* Best Available Players */}
-                <div className="space-y-2 mb-3">
-                  <div className="text-xs text-gray-300 font-medium">
-                    Best Available:
-                  </div>
-                  {bestAvailableByPosition[position] ? (
-                    bestAvailableByPosition[position].map((player, index) => (
-                      <div
-                        key={player.id}
-                        className="bg-gray-800 p-2 rounded text-xs"
-                      >
-                        <div className="font-medium text-white truncate">
-                          {player.name}
-                        </div>
-                        <div className="flex justify-between text-gray-400 mt-1">
-                          <span>{player.team}</span>
-                          <span>{player.fpts.toFixed(1)} pts</span>
-                        </div>
-                        <div className="text-gray-500 text-xs">
-                          ADP:{" "}
-                          {player.adp === 999 ? "N/A" : player.adp.toFixed(1)}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-gray-500 text-xs text-center py-2">
-                      No available players
-                    </div>
-                  )}
-                </div>
-
-                {/* Worst Case Scenario */}
-                {onClockManager && (
-                  <div className="border-t border-gray-500 pt-2">
-                    <div className="text-xs text-red-300 font-medium mb-1">
-                      Worst Case (Next Turn):
-                    </div>
-                    {worstCasePlayer ? (
-                      <div className="bg-red-900/30 p-2 rounded text-xs border border-red-500/30">
-                        <div className="font-medium text-red-200 truncate">
-                          {worstCasePlayer.name}
-                        </div>
-                        <div className="flex justify-between text-red-300 mt-1">
-                          <span>{worstCasePlayer.team}</span>
-                          <span>{worstCasePlayer.fpts.toFixed(1)} pts</span>
-                        </div>
-                        <div className="text-red-400 text-xs">
-                          -
-                          {(
-                            bestAvailableByPosition[position]?.[0]?.fpts -
-                              worstCasePlayer.fpts || 0
-                          ).toFixed(1)}{" "}
-                          pts vs best
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-800 p-2 rounded text-xs">
-                        <div className="text-gray-400">
-                          No players available at next turn
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Picks until next: {onClockManager.picksUntilNextTurn}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+            Refresh
+          </button>
         </div>
       </div>
 
-      {/* Roster Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {rosterSummariesWithEfficiency.map((summary) => {
-          const organizedRoster = organizeRoster(summary.roster);
+      {!isMinimized && (
+        <>
+          {/* Summary Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-700 p-3 rounded text-center">
+              <div className="text-2xl font-bold text-white">
+                {rosterSummaries.length}
+              </div>
+              <div className="text-gray-300 text-sm">Total Rosters</div>
+            </div>
+            <div className="bg-gray-700 p-3 rounded text-center">
+              <div className="text-2xl font-bold text-white">
+                {currentPicks.length}
+              </div>
+              <div className="text-gray-300 text-sm">Total Picks</div>
+            </div>
+            <div className="bg-gray-700 p-3 rounded text-center">
+              <div className="text-2xl font-bold text-white">
+                {currentPickNumber}
+              </div>
+              <div className="text-gray-300 text-sm">Current Pick</div>
+            </div>
+            <div className="bg-gray-700 p-3 rounded text-center">
+              <div className="text-2xl font-bold text-white">
+                {Math.ceil(currentPickNumber / numManagers)}
+              </div>
+              <div className="text-gray-300 text-sm">Current Round</div>
+            </div>
+          </div>
 
-          return (
-            <div
-              key={summary.manager.user_id}
-              className={`bg-gray-700 rounded-lg p-4 ${
-                summary.isOnClock ? "ring-2 ring-cyan-500" : ""
-              }`}
-            >
-              {/* Manager Header */}
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="font-bold text-white text-lg">
-                    {summary.manager.display_name}
-                  </h3>
-                  <div className="text-sm text-gray-300">
-                    Pick #{summary.draftPosition}
-                  </div>
-                </div>
-                <div className="text-center">
+          {/* Position Priority Ranking */}
+          {positionPriority.length > 0 && (
+            <div className="bg-gradient-to-r from-cyan-900/50 to-blue-900/50 p-4 rounded-lg mb-6 border border-cyan-500/30">
+              <h3 className="text-lg font-bold text-cyan-300 mb-3 flex items-center">
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                  />
+                </svg>
+                Optimal Draft Strategy (Monte Carlo Simulation)
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {positionPriority.slice(0, 6).map((priority, index) => (
                   <div
-                    className={`text-2xl font-bold ${
-                      summary.isOnClock ? "text-cyan-400" : "text-gray-300"
+                    key={priority.position}
+                    className={`p-3 rounded-lg border ${
+                      index === 0
+                        ? "bg-yellow-900/30 border-yellow-500/50"
+                        : index === 1
+                        ? "bg-orange-900/30 border-orange-500/50"
+                        : index === 2
+                        ? "bg-red-900/30 border-red-500/50"
+                        : "bg-gray-800/50 border-gray-600/50"
                     }`}
                   >
-                    {summary.picksUntilNext}
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {summary.isOnClock ? "ON CLOCK" : "picks away"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Roster Layout */}
-              <div className="space-y-2 mb-3">
-                {organizedRoster.map((pick, index) => {
-                  const slotPosition = rosterSetup[index];
-                  const isEmpty = !pick || !pick.player_id;
-                  let player = null;
-                  let optimalScore = 0;
-
-                  if (!isEmpty && playerData) {
-                    player = playerData.find((p) => p.id === pick.player_id);
-                    optimalScore = calculateOptimalScore(pick, pick.pick_no);
-                  }
-
-                  return (
-                    <div
-                      key={index}
-                      className={`flex items-center justify-between p-2 rounded text-sm ${
-                        isEmpty
-                          ? "bg-gray-600 border-dashed border border-gray-500"
-                          : "bg-gray-600"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2 flex-grow min-w-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
                         <span
-                          className={`font-mono text-xs px-2 py-1 rounded flex-shrink-0 ${
-                            slotPosition === "QB"
-                              ? "bg-red-600 text-white"
-                              : slotPosition === "RB"
-                              ? "bg-green-600 text-white"
-                              : slotPosition === "WR"
-                              ? "bg-blue-600 text-white"
-                              : slotPosition === "TE"
-                              ? "bg-orange-600 text-white"
-                              : slotPosition === "FLEX"
-                              ? "bg-purple-600 text-white"
-                              : slotPosition === "K"
-                              ? "bg-yellow-600 text-white"
-                              : slotPosition === "DEF"
-                              ? "bg-indigo-600 text-white"
-                              : slotPosition === "BN"
-                              ? "bg-gray-500 text-gray-300"
-                              : "bg-slate-600 text-white"
-                          }`}
-                        >
-                          {slotPosition}
-                        </span>
-                        {isEmpty ? (
-                          <span className="text-gray-400 italic">Empty</span>
-                        ) : (
-                          <div className="flex-grow min-w-0">
-                            <div className="truncate text-white">
-                              {player
-                                ? `${player.name} (${player.pos})`
-                                : "Unknown Player"}
-                            </div>
-                            {player && (
-                              <div className="text-xs text-gray-400 flex justify-between">
-                                <span>
-                                  {player.team} - {player.fpts.toFixed(1)} pts
-                                </span>
-                                <span className="text-cyan-400">
-                                  +{optimalScore.toFixed(1)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      {!isEmpty && (
-                        <div className="text-xs text-gray-400 flex-shrink-0">
-                          #{pick.pick_no}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Position and Total Summaries */}
-              <div className="border-t border-gray-600 pt-3 space-y-2">
-                {/* Position Totals */}
-                <div className="text-xs">
-                  <div className="font-medium text-gray-300 mb-1">
-                    Position Totals:
-                  </div>
-                  {Object.entries(summary.positionTotals).map(
-                    ([position, totals]) => (
-                      <div
-                        key={position}
-                        className="flex justify-between text-xs"
-                      >
-                        <span
-                          className={`${
-                            position === "QB"
-                              ? "text-red-400"
-                              : position === "RB"
-                              ? "text-green-400"
-                              : position === "WR"
-                              ? "text-blue-400"
-                              : position === "TE"
+                          className={`text-lg font-bold mr-2 ${
+                            index === 0
+                              ? "text-yellow-400"
+                              : index === 1
                               ? "text-orange-400"
+                              : index === 2
+                              ? "text-red-400"
                               : "text-gray-300"
                           }`}
                         >
-                          {position} ({totals.count}):
+                          #{index + 1}
                         </span>
-                        <span className="text-gray-300">
-                          {totals.fantasyPoints.toFixed(1)} pts
-                          <span className="text-cyan-400 ml-1">
-                            +{totals.optimalScore.toFixed(1)}
-                          </span>
+                        <span
+                          className={`font-bold ${
+                            priority.position === "QB"
+                              ? "text-red-400"
+                              : priority.position === "RB"
+                              ? "text-green-400"
+                              : priority.position === "WR"
+                              ? "text-blue-400"
+                              : priority.position === "TE"
+                              ? "text-orange-400"
+                              : priority.position === "FLEX"
+                              ? "text-purple-400"
+                              : "text-gray-300"
+                          }`}
+                        >
+                          {priority.position}
                         </span>
                       </div>
-                    )
-                  )}
-                </div>
-
-                {/* Overall Totals */}
-                <div className="border-t border-gray-600 pt-2 text-sm">
-                  <div className="flex justify-between font-medium">
-                    <span className="text-white">Total Fantasy Points:</span>
-                    <span className="text-white">
-                      {summary.totalFantasyPoints.toFixed(1)}
-                    </span>
+                      <div
+                        className={`text-lg font-bold ${
+                          index === 0
+                            ? "text-yellow-400"
+                            : index === 1
+                            ? "text-orange-400"
+                            : index === 2
+                            ? "text-red-400"
+                            : "text-gray-300"
+                        }`}
+                      >
+                        +{(priority.expectedValue || 0).toFixed(1)}
+                      </div>
+                    </div>
+                    <div className="text-xs space-y-1">
+                      <div className="flex justify-between text-green-300">
+                        <span>Best Now:</span>
+                        <span>
+                          {priority.bestPlayer.name} (
+                          {(priority.bestPoints || 0).toFixed(1)})
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-blue-300">
+                        <span>Expected Next:</span>
+                        <span>
+                          {(priority.expectedPoints || 0).toFixed(1)} pts
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-red-300">
+                        <span>Worst Case:</span>
+                        <span>
+                          {priority.worstCasePlayer.name} (
+                          {(priority.worstCasePoints || 0).toFixed(1)})
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-gray-400">
+                        <span>Simulations:</span>
+                        <span>
+                          {priority.simulations} ({priority.confidence})
+                        </span>
+                      </div>
+                      {priority.debug && (
+                        <div className="flex justify-between text-yellow-400 text-xs">
+                          <span>Debug:</span>
+                          <span>
+                            {priority.debug.picksUntilNextTurn || 0} picks,{" "}
+                            {priority.debug.totalAvailableForPosition || 0}{" "}
+                            avail
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex justify-between font-medium">
-                    <span className="text-cyan-300">Total Optimal Score:</span>
-                    <span className="text-cyan-300">
-                      +{summary.totalOptimalScore.toFixed(1)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between font-bold text-purple-400 border-t border-gray-600 pt-1 mt-1">
-                    <span>Draft Efficiency:</span>
-                    <span>{summary.draftEfficiency.toFixed(1)}%</span>
-                  </div>
-                </div>
+                ))}
+              </div>
+              <div className="mt-3 text-xs text-cyan-200">
+                🧠 Monte Carlo simulation considers all possible draft outcomes
+                between now and your next pick. Higher expected value = better
+                choice to draft now vs. waiting!
               </div>
             </div>
-          );
-        })}
-      </div>
+          )}
+
+          {/* Position Summary */}
+          <div className="bg-gray-700 p-4 rounded-lg mb-6">
+            <h3 className="text-lg font-bold text-white mb-3">
+              Position Summary (Drafted / Total Needed)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {Object.entries(positionSummary).map(([position, counts]) => {
+                // Find the on-the-clock manager for worst case calculation
+                const onClockManager = rosterSummaries.find(
+                  (summary) => summary.isOnClock
+                );
+                const worstCasePlayer = onClockManager
+                  ? getWorstCasePlayer(
+                      position,
+                      onClockManager.picksUntilNextTurn
+                    )
+                  : null;
+
+                return (
+                  <div key={position} className="bg-gray-600 p-3 rounded-lg">
+                    {/* Position Header */}
+                    <div className="text-center mb-3">
+                      <div
+                        className={`text-lg font-bold ${
+                          position === "QB"
+                            ? "text-red-400"
+                            : position === "RB"
+                            ? "text-green-400"
+                            : position === "WR"
+                            ? "text-blue-400"
+                            : position === "TE"
+                            ? "text-orange-400"
+                            : position === "K"
+                            ? "text-yellow-400"
+                            : position === "DEF"
+                            ? "text-indigo-400"
+                            : "text-gray-300"
+                        }`}
+                      >
+                        {counts.drafted} / {counts.total}
+                      </div>
+                      <div className="text-gray-300 text-sm font-medium">
+                        {position}
+                      </div>
+                      {counts.total > 0 && (
+                        <div className="text-xs text-gray-400">
+                          {Math.round((counts.drafted / counts.total) * 100)}%
+                          filled
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Best Available Players */}
+                    <div className="space-y-2 mb-3">
+                      <div className="text-xs text-gray-300 font-medium">
+                        Best Available:
+                      </div>
+                      {bestAvailableByPosition[position] ? (
+                        bestAvailableByPosition[position].map(
+                          (player, index) => (
+                            <div
+                              key={player.id}
+                              className="bg-gray-800 p-2 rounded text-xs"
+                            >
+                              <div className="font-medium text-white truncate">
+                                {player.name}
+                              </div>
+                              <div className="flex justify-between text-gray-400 mt-1">
+                                <span>{player.team}</span>
+                                <span>{player.fpts.toFixed(1)} pts</span>
+                              </div>
+                              <div className="text-gray-500 text-xs">
+                                ADP:{" "}
+                                {player.adp === 999
+                                  ? "N/A"
+                                  : player.adp.toFixed(1)}
+                              </div>
+                            </div>
+                          )
+                        )
+                      ) : (
+                        <div className="text-gray-500 text-xs text-center py-2">
+                          No available players
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Worst Case Scenario */}
+                    {onClockManager && (
+                      <div className="border-t border-gray-500 pt-2">
+                        <div className="text-xs text-red-300 font-medium mb-1">
+                          Worst Case (Next Turn):
+                        </div>
+                        {worstCasePlayer ? (
+                          <div className="bg-red-900/30 p-2 rounded text-xs border border-red-500/30">
+                            <div className="font-medium text-red-200 truncate">
+                              {worstCasePlayer.name}
+                            </div>
+                            <div className="flex justify-between text-red-300 mt-1">
+                              <span>{worstCasePlayer.team}</span>
+                              <span>{worstCasePlayer.fpts.toFixed(1)} pts</span>
+                            </div>
+                            <div className="text-red-400 text-xs">
+                              -
+                              {(
+                                bestAvailableByPosition[position]?.[0]?.fpts -
+                                  worstCasePlayer.fpts || 0
+                              ).toFixed(1)}{" "}
+                              pts vs best
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-gray-800 p-2 rounded text-xs">
+                            <div className="text-gray-400">
+                              No players available at next turn
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Picks until next:{" "}
+                              {onClockManager.picksUntilNextTurn}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Roster Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {rosterSummariesWithEfficiency.map((summary) => {
+              const organizedRoster = organizeRoster(summary.roster);
+
+              return (
+                <div
+                  key={summary.manager.user_id}
+                  className={`bg-gray-700 rounded-lg p-4 ${
+                    summary.isOnClock ? "ring-2 ring-cyan-500" : ""
+                  }`}
+                >
+                  {/* Manager Header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="font-bold text-white text-lg">
+                        {summary.manager.display_name}
+                      </h3>
+                      <div className="text-sm text-gray-300">
+                        Pick #{summary.draftPosition}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div
+                        className={`text-2xl font-bold ${
+                          summary.isOnClock ? "text-cyan-400" : "text-gray-300"
+                        }`}
+                      >
+                        {summary.picksUntilNext}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {summary.isOnClock ? "ON CLOCK" : "picks away"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Roster Layout */}
+                  <div className="space-y-2 mb-3">
+                    {organizedRoster.map((pick, index) => {
+                      const slotPosition = rosterSetup[index];
+                      const isEmpty = !pick || !pick.player_id;
+                      let player = null;
+                      let optimalScore = 0;
+
+                      if (!isEmpty && playerData) {
+                        player = playerData.find(
+                          (p) => p.id === pick.player_id
+                        );
+                        optimalScore = calculateOptimalScore(
+                          pick,
+                          pick.pick_no
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center justify-between p-2 rounded text-sm ${
+                            isEmpty
+                              ? "bg-gray-600 border-dashed border border-gray-500"
+                              : "bg-gray-600"
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2 flex-grow min-w-0">
+                            <span
+                              className={`font-mono text-xs px-2 py-1 rounded flex-shrink-0 ${
+                                slotPosition === "QB"
+                                  ? "bg-red-600 text-white"
+                                  : slotPosition === "RB"
+                                  ? "bg-green-600 text-white"
+                                  : slotPosition === "WR"
+                                  ? "bg-blue-600 text-white"
+                                  : slotPosition === "TE"
+                                  ? "bg-orange-600 text-white"
+                                  : slotPosition === "FLEX"
+                                  ? "bg-purple-600 text-white"
+                                  : slotPosition === "K"
+                                  ? "bg-yellow-600 text-white"
+                                  : slotPosition === "DEF"
+                                  ? "bg-indigo-600 text-white"
+                                  : slotPosition === "BN"
+                                  ? "bg-gray-500 text-gray-300"
+                                  : "bg-slate-600 text-white"
+                              }`}
+                            >
+                              {slotPosition}
+                            </span>
+                            {isEmpty ? (
+                              <span className="text-gray-400 italic">
+                                Empty
+                              </span>
+                            ) : (
+                              <div className="flex-grow min-w-0">
+                                <div className="truncate text-white">
+                                  {player
+                                    ? `${player.name} (${player.pos})`
+                                    : "Unknown Player"}
+                                </div>
+                                {player && (
+                                  <div className="text-xs text-gray-400 flex justify-between">
+                                    <span>
+                                      {player.team} - {player.fpts.toFixed(1)}{" "}
+                                      pts
+                                    </span>
+                                    <span className="text-cyan-400">
+                                      +{optimalScore.toFixed(1)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          {!isEmpty && (
+                            <div className="text-xs text-gray-400 flex-shrink-0">
+                              #{pick.pick_no}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Position and Total Summaries */}
+                  <div className="border-t border-gray-600 pt-3 space-y-2">
+                    {/* Position Totals */}
+                    <div className="text-xs">
+                      <div className="font-medium text-gray-300 mb-1">
+                        Position Totals:
+                      </div>
+                      {Object.entries(summary.positionTotals).map(
+                        ([position, totals]) => (
+                          <div
+                            key={position}
+                            className="flex justify-between text-xs"
+                          >
+                            <span
+                              className={`${
+                                position === "QB"
+                                  ? "text-red-400"
+                                  : position === "RB"
+                                  ? "text-green-400"
+                                  : position === "WR"
+                                  ? "text-blue-400"
+                                  : position === "TE"
+                                  ? "text-orange-400"
+                                  : "text-gray-300"
+                              }`}
+                            >
+                              {position} ({totals.count}):
+                            </span>
+                            <span className="text-gray-300">
+                              {totals.fantasyPoints.toFixed(1)} pts
+                              <span className="text-cyan-400 ml-1">
+                                +{totals.optimalScore.toFixed(1)}
+                              </span>
+                            </span>
+                          </div>
+                        )
+                      )}
+                    </div>
+
+                    {/* Overall Totals */}
+                    <div className="border-t border-gray-600 pt-2 text-sm">
+                      <div className="flex justify-between font-medium">
+                        <span className="text-white">
+                          Total Fantasy Points:
+                        </span>
+                        <span className="text-white">
+                          {summary.totalFantasyPoints.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between font-medium">
+                        <span className="text-cyan-300">
+                          Total Optimal Score:
+                        </span>
+                        <span className="text-cyan-300">
+                          +{summary.totalOptimalScore.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between font-bold text-purple-400 border-t border-gray-600 pt-1 mt-1">
+                        <span>Draft Efficiency:</span>
+                        <span>{summary.draftEfficiency.toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 };
